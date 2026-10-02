@@ -45,7 +45,7 @@ const snap = (x) => { for (const win of [.7, 1.4]) { let best = null; for (const
   let cb = null; for (const c of capsRaw) if (Math.abs(c.start - x) <= .7 && (cb == null || Math.abs(c.start - x) < Math.abs(cb - x))) cb = c.start;
   if (cb != null) return +cb.toFixed(2);
   console.warn('snap: no pause or phrase break near', x); return +x.toFixed(2); };
-const L = { full: { s: 1, x: 0, y: 0 }, split: { s: .62, x: 205, y: 730 }, push: { s: 1.06, x: -32, y: -48 }, punch: { s: 1.14, x: -76, y: -112 } };
+const L = { full: { s: 1, x: 0, y: 0 }, split: { s: .62, x: 205, y: 730 }, dense: { s: .5, x: 270, y: 960 }, push: { s: 1.06, x: -32, y: -48 }, punch: { s: 1.14, x: -76, y: -112 } };
 // snapBefore(x): for 'split' moves, x = when the graphic enters. The move is centred on the returned time and starts .4s
 // earlier, so any pause/phrase break ≤ x + .4 keeps "person moves aside before the graphic enters". Prefer the latest
 // real pause in [x-1.4, x+.4], else the latest phrase break (caption start) there, else x.
@@ -60,14 +60,14 @@ const caps = capsRaw.map((c, ci) => ({ ...c, chars: chars.filter((x) => x.cap ==
 console.log('camera:', CAM.map((k) => k.t + ':' + k.l).join(' '));
 // guard: every graphic must enter after the camera has started moving aside
 const layoutAt = (x) => { let cur = 'full'; for (const k of [...CAM].sort((a, b) => a.t - b.t)) if (k.t <= x) cur = k.l; return cur; };
-for (const b of B) { if (b.c === 'title' || b.c === 'cta') continue; const k = [...CAM].filter((k) => k.l === 'split' && k.t - .4 <= b.s + .6).sort((a, c) => c.t - a.t)[0];
-  if (k && layoutAt(b.s + .3) === 'split' && k.t - .4 > b.s) console.warn(`camera: '${b.c}' enters at ${b.s.toFixed(2)}s before the split move starts (${(k.t - .4).toFixed(2)}s) — use snapBefore()`); }
+for (const b of B) { if (b.c === 'title' || b.c === 'cta') continue; const k = [...CAM].filter((k) => (k.l === 'split' || k.l === 'dense') && k.t - .4 <= b.s + .6).sort((a, c) => c.t - a.t)[0];
+  if (k && ['split', 'dense'].includes(layoutAt(b.s + .3)) && k.t - .4 > b.s) console.warn(`camera: '${b.c}' enters at ${b.s.toFixed(2)}s before the split move starts (${(k.t - .4).toFixed(2)}s) — use snapBefore()`); }
 
 // ---------- compose ----------
 let html = '', js = '';
 B.forEach((b, i) => {
   const id = `b${i}`, comp = C[b.c](id, b.d);
-  const inner = b.c === 'title' || b.c === 'cta' ? comp.html : `<div class="zone">${comp.html}</div>`;
+  const inner = b.c === 'title' || b.c === 'cta' ? comp.html : `<div class="zone${b.dense ? ' tall' : ''}">${comp.html}</div>`;
   html += `<div id="${id}" class="clip beat" data-start="${b.s.toFixed(2)}" data-duration="${(b.e - b.s).toFixed(2)}" data-track-index="${4 + (i % 2)}"><div class="in" id="${id}-in">${inner}</div></div>\n`;
   js += comp.js + '\n';
   if (b.e < D - .1) js += `tl.to('#${id}-in', {opacity: 0, y: -30, duration: .3, ease: 'power2.in'}, ${(b.e - .3).toFixed(2)});\n`;

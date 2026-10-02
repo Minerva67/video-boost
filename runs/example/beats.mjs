@@ -4,8 +4,8 @@ export default ({ t, D, snap, snapBefore }) => {
 const HL = ['关键词A', '关键词B'];                        // caption keywords coloured with the theme accent
 
 // chapters → the persistent N-point tracker (intro shows "N 点", recap ticks all)
-// chapter titles = the point's conclusion (verb phrase / judgement, ≤7 字), not a topic noun — see references/rules.md §4
-const CH = [[0, '开场'], [t('第一点'), '先做出作品'], [t('第二点'), '卖经验不卖工具'], [t('总结一下'), '回顾']];
+// chapter titles come from runs/<name>/structure.md: 角色词 · 结论 (≤12 字) — see references/rules.md §4
+const CH = [[0, '开场'], [t('第一点'), '盘点 · 先做出作品'], [t('第二点'), '方向 · 卖经验不卖工具'], [t('总结一下'), '回顾']];
 const TRACK = { intro: true, recap: true };
 
 const B = [
@@ -16,7 +16,8 @@ const B = [
     b: { t: '不会贬值的东西', at: t('真正值钱的') },
     gap: { t: '差距在这里', at: t('真正值钱的') + 1.5 } } },
   // the speaker describes doing something with a tool → show the real interface (mark 示意, real logos via :slug:)
-  { c: 'cc', s: t('我会让') - .3, e: t('总结一下') - .1, d: {
+  // dense: true → person 50%, 760px zone (tables ≥8 rows, lists ≥6, UI mocks) — camera key must use l: 'dense'
+  { c: 'cc', dense: true, s: t('我会让') - .3, e: t('总结一下') - .1, d: {
     at: t('我会让') - .2, title: ':claudecode: Claude Code', tag: '示意', events: [
       { type: 'prompt', t: '帮我把这件事做完', at: t('我会让') + .1, dur: 1.2 },
       { type: 'tool', name: 'WebSearch', arg: '…', res: '…', at: t('去搜') },

@@ -117,8 +117,8 @@ def layout_at(t):
 flip = []
 seq = sorted(CAM, key=lambda k: k['t'])
 for k in range(1, len(seq) - 1):
-    if seq[k]['l'] in ('full', 'push') and seq[k - 1]['l'] == 'split':
-        nxt = next((x for x in seq[k + 1:] if x['l'] == 'split'), None)
+    if seq[k]['l'] in ('full', 'push') and seq[k - 1]['l'] in ('split', 'dense'):
+        nxt = next((x for x in seq[k + 1:] if x['l'] in ('split', 'dense')), None)
         if nxt and nxt['t'] - seq[k]['t'] < 4: flip.append(round(seq[k]['t'], 1))
 add('C2', '运镜', '不一缩一放（全屏 <4s 又让位）', 'PASS' if not flip else 'WARN', f'{len(flip)} 处' + (f'：{flip}' if flip else ''))
 
@@ -127,13 +127,13 @@ for b in B:
     if b['c'] in ('title', 'cta'): continue
     for f in (.35, .65, .9):
         t = b['s'] + (b['e'] - b['s']) * f
-        if layout_at(t) != 'split': mis.append((b['c'], round(t, 1))); break
+        if layout_at(t) not in ('split', 'dense'): mis.append((b['c'], round(t, 1))); break
 add('C3', '运镜', '图形在场时人一定让位', 'PASS' if not mis else 'FAIL', f'{len(mis)} 个图形压在全屏人像上' + (f'：{mis}' if mis else ''))
 
 late = []
 for b in B:
     if b['c'] in ('title', 'cta'): continue
-    ks = [k for k in CAM if k['l'] == 'split' and k['t'] - .4 <= b['s'] + .6]
+    ks = [k for k in CAM if k['l'] in ('split', 'dense') and k['t'] - .4 <= b['s'] + .6]
     if ks:
         k = max(ks, key=lambda k: k['t'])
         if k['t'] - .4 > b['s'] + .02: late.append((b['c'], round(b['s'], 2), round(k['t'] - .4, 2)))

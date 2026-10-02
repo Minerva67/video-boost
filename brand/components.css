@@ -11,7 +11,9 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 #cam video { width: 100%; height: 100%; display: block; }
 .beat { position: absolute; inset: 0; pointer-events: none; }
 .beat .in { position: absolute; inset: 0; }
-.zone { position: absolute; left: 64px; right: 64px; top: 150px; height: 550px; }
+.zone { position: absolute; left: 64px; right: 64px; top: 150px; height: var(--zh); --zh: 550px; }
+/* dense layout: person at 50% bottom-centre → graphic zone grows to 760px */
+.zone.tall { --zh: 760px; }
 
 /* ditto 〃 — the only place orange is mandatory */
 .ditto { display: inline-block; position: relative; width: .34em; height: .38em; vertical-align: top; margin-left: .06em; }
@@ -68,7 +70,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-stat .src { margin-top: 30px; font: 500 44px/1.4 var(--cn); }
 
 /* ---------- CMP-01 split ---------- */
-.k-split { position: absolute; left: 0; right: 0; top: 0; height: 550px; display: grid; grid-template-columns: 1fr 2px 1fr; gap: 36px; }
+.k-split { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); display: grid; grid-template-columns: 1fr 2px 1fr; gap: 36px; }
 .k-split .ttl { grid-column: 1 / -1; font: 900 56px/1.2 var(--cn); align-self: start; }
 .k-split .side { position: relative; padding: 8px 0; }
 .k-split .seam { display: block; width: 2px; background: var(--ink); transform-origin: 50% 0; }
@@ -181,7 +183,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-trend .gapl { position: absolute; right: 90px; top: 220px; font: 700 34px/1.25 var(--cn); text-align: right; }
 
 /* ---------- résumé mock ---------- */
-.k-cv { position: absolute; left: 0; right: 0; top: 0; height: 550px; padding: 30px 40px; border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden; }
+.k-cv { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); padding: 30px 40px; border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden; }
 .k-cv .top { display: flex; align-items: center; gap: 22px; padding-bottom: 22px; border-bottom: var(--stroke) solid var(--line); }
 .k-cv .av { width: 72px; height: 72px; border-radius: 50%; background: var(--line); }
 .k-cv .nm i { display: block; height: 22px; border-radius: 11px; background: var(--line); }
@@ -200,7 +202,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-cv .scan span { position: absolute; right: 16px; top: -40px; padding: 6px 14px; border-radius: 999px; background: var(--ink); color: var(--paper); font: 600 24px/1 var(--cn); }
 
 /* ---------- terminal mock ---------- */
-.k-term { position: absolute; left: 0; right: 0; top: 0; height: 550px; border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden; }
+.k-term { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden; }
 .k-term .bar { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border-bottom: var(--stroke) solid var(--line); background: var(--paper); }
 .k-term .bar i { width: 14px; height: 14px; border-radius: 50%; border: var(--stroke) solid var(--ink40); }
 .k-term .bar span { margin-left: 12px; font: 600 24px/1 var(--en); color: var(--ink70); }
@@ -228,7 +230,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-cta .btn { display: grid; place-items: center; height: 84px; padding: 0 38px; border-radius: 42px; background: var(--mark); border: var(--stroke) solid var(--frame); font: 700 36px/1 var(--cn); }
 
 /* ---------- Claude Code session mock ---------- */
-.k-cc { position: absolute; left: 0; right: 0; top: 0; height: 550px; border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden;
+.k-cc { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden;
   --mono: 'SF Mono', Menlo, 'PingFang SC', monospace; }
 .k-cc .bar { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border-bottom: var(--stroke) solid var(--line); background: var(--paper); }
 .k-cc .bar i { width: 14px; height: 14px; border-radius: 50%; border: var(--stroke) solid var(--ink40); }
@@ -264,7 +266,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-cc .dn { display: inline-block; margin: 6px 0 12px; padding: 10px 18px; border-radius: 999px; background: var(--ink); color: var(--paper); font: 700 26px/1.2 var(--cn); }
 
 /* ---------- portfolio mock ---------- */
-.k-folio { position: absolute; left: 0; right: 0; top: 0; height: 550px; border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden; }
+.k-folio { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); overflow: hidden; }
 .k-folio .bar { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border-bottom: var(--stroke) solid var(--line); background: var(--paper); }
 .k-folio .bar i { width: 14px; height: 14px; border-radius: 50%; border: var(--stroke) solid var(--ink40); }
 .k-folio .bar span { margin-left: 12px; font: 600 24px/1 var(--cn); }
@@ -290,7 +292,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-cv .line .new::before, .k-cv .line .old::before { content: '· '; color: var(--ink40); }
 
 /* ---------- checktable (subtraction) ---------- */
-.k-ct { position: absolute; left: 0; right: 0; top: 0; height: 550px; }
+.k-ct { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); }
 .k-ct .hdr, .k-ct .row { display: grid; grid-template-columns: 1fr 170px 170px; align-items: center; }
 .k-ct .hdr { height: 54px; border-bottom: 2px solid var(--ink); font: 700 30px/1 var(--cn); }
 .k-ct .hdr .c { text-align: center; }
@@ -305,7 +307,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-ct .note { position: absolute; left: 0; bottom: 14px; font: 500 22px/1 var(--cn); color: var(--ink40); }
 
 /* ---------- context-window timeline ---------- */
-.k-ctx { position: absolute; left: 0; right: 0; top: 0; height: 550px; }
+.k-ctx { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); }
 .k-ctx .hd { font: 900 46px/1.2 var(--cn); }
 .k-ctx .plot { position: absolute; left: 0; right: 0; top: 80px; height: 400px; }
 .k-ctx .axis { position: absolute; left: 0; right: 0; top: 330px; height: 2px; background: var(--ink); }
@@ -319,7 +321,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-ctx .src { position: absolute; left: 0; right: 0; bottom: 0; font: 500 19px/1.3 var(--en); color: var(--ink40); }
 
 /* ---------- occupied tracks ---------- */
-.k-occ { position: absolute; left: 0; right: 0; top: 0; height: 550px; }
+.k-occ { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 550px); }
 .k-occ .hd { font: 900 52px/1.2 var(--cn); margin-bottom: 20px; }
 .k-occ .row { display: flex; align-items: center; gap: 18px; height: 82px; border-bottom: 1px solid var(--line); }
 .k-occ .row .t { width: 170px; flex: none; font: 700 36px/1 var(--cn); }
@@ -350,3 +352,29 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-cc .dr .k { width: 210px; white-space: nowrap; }
 .k-cv .chip { font-size: 29px; padding-right: 22px; }
 .k-folio .card .th .ico { width: 44px; height: 44px; margin: 0; }
+
+/* tall zone: same components, more room → larger rows/type, less scrolling */
+.zone.tall .k-ct .hdr { height: 64px; font-size: 34px; }
+.zone.tall .k-ct .row { height: 58px; font-size: 38px; }
+.zone.tall .k-ct .ck { width: 32px; height: 32px; }
+.zone.tall .k-ct .ck::after { left: 11px; top: 6px; width: 8px; height: 14px; }
+.zone.tall .k-cc .pr { font-size: 32px; }
+.zone.tall .k-cc .tool { font-size: 26px; }
+.zone.tall .k-cc .tr { height: 50px; font-size: 30px; }
+.zone.tall .k-cc .dr { min-height: 58px; font-size: 30px; }
+.zone.tall .k-cc .doc .dh { font-size: 32px; }
+.zone.tall .k-cc .note { font-size: 30px; }
+.zone.tall .k-cv .line { height: 66px; font-size: 40px; line-height: 66px; }
+.zone.tall .k-cv .chip { height: 92px; font-size: 34px; }
+.zone.tall .k-cv .sec { margin-top: 34px; }
+.zone.tall .k-occ .hd { font-size: 60px; margin-bottom: 28px; }
+.zone.tall .k-occ .row { height: 108px; }
+.zone.tall .k-occ .row .t { font-size: 42px; width: 200px; }
+.zone.tall .k-occ .p { font-size: 34px !important; padding: 12px 22px; }
+.zone.tall .k-occ .axis { margin-top: 40px; font-size: 36px; }
+.zone.tall .k-lines .hd { font-size: 64px; margin-bottom: 34px; }
+.zone.tall .k-lines .row { height: 96px; font-size: 48px; }
+.zone.tall .k-folio .card { height: 260px; }
+.zone.tall .k-folio .card b { font-size: 32px; }
+.zone.tall .k-folio .re { height: 120px; font-size: 36px; margin-top: 26px; }
+.zone.tall .k-ct .hdr, .zone.tall .k-ct .row { grid-template-columns: 1fr 220px 240px; }
