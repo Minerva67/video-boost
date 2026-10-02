@@ -1,0 +1,382 @@
+<title>Video Boost 流程画板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* layout: a pinned-up whiteboard — dot grid ground, four lanes of sticky cards, one marker colour per meaning (yellow = editor's eye, orange = gate) */
+:root{
+  --bg:#FBF8F1; --dot:#E3DFD5; --card:#FFFFFF; --ink:#151716; --ink2:#5B5D5C; --ink3:#8E8F8C; --line:#D9D4C8;
+  --mark:#FAE36B; --markInk:#151716; --accent:#EF6A2F; --accentSoft:#FBE3D7; --soft:#F3EFE6;
+  --en:'Outfit','PingFang SC',sans-serif; --cn:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif; --mono:'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141513;--dot:#2A2B28;--card:#1D1E1C;--ink:#EEEBE3;--ink2:#B5B3AC;--ink3:#86857F;--line:#3A3B37;--mark:#E9CF4F;--markInk:#151716;--accent:#F2814E;--accentSoft:#3A2419;--soft:#24251F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141513;--dot:#2A2B28;--card:#1D1E1C;--ink:#EEEBE3;--ink2:#B5B3AC;--ink3:#86857F;--line:#3A3B37;--mark:#E9CF4F;--markInk:#151716;--accent:#F2814E;--accentSoft:#3A2419;--soft:#24251F;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);background-size:22px 22px;color:var(--ink);font:400 15px/1.65 var(--cn);margin:0}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+h1{font:800 clamp(28px,4vw,42px)/1.15 var(--en);letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1 span{font-family:var(--cn);font-weight:700}
+h2{font:700 22px/1.3 var(--cn);margin:0;text-wrap:balance}
+h3{font:700 16px/1.4 var(--cn);margin:0}
+p{margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border:1.5px solid var(--ink);border-radius:999px;background:var(--card);font:500 13px/1 var(--cn);white-space:nowrap}
+.chip.y{background:var(--mark);color:var(--markInk);border-color:var(--markInk)}
+.chip.o{background:var(--accentSoft);border-color:var(--accent);color:var(--ink)}
+.chip code,.mono{font:500 12.5px/1.4 var(--mono)}
+.lede{max-width:70ch;color:var(--ink2);margin-top:14px}
+section{margin-top:44px}
+.sec-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.sec-h .tag{font:700 13px/1 var(--en);letter-spacing:.08em;color:var(--ink3)}
+.sec-h p{color:var(--ink2);font-size:14px}
+.card{background:var(--card);border:1.5px solid var(--ink);border-radius:16px;padding:16px 18px;min-width:0}
+.card.y{border-color:var(--ink);box-shadow:6px 6px 0 var(--mark)}
+.card.o{box-shadow:6px 6px 0 var(--accent)}
+.card .k{font:700 12px/1 var(--en);letter-spacing:.08em;color:var(--ink3);margin-bottom:6px}
+ul,ol{margin:8px 0 0;padding-left:1.2em}
+li{margin:3px 0}
+li::marker{color:var(--ink3)}
+.small{font-size:13px;color:var(--ink2)}
+code{font:500 12.5px/1.4 var(--mono);background:var(--soft);padding:1px 5px;border-radius:5px;word-break:break-word}
+mark{background:var(--mark);color:var(--markInk);padding:0 3px;border-radius:3px}
+/* lanes */
+.lanes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;position:relative}
+.lane{display:flex;flex-direction:column;gap:12px;min-width:0}
+.lane-h{display:flex;align-items:center;gap:10px}
+.num{flex:none;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;font:800 16px/1 var(--en);background:var(--card)}
+.lane-h.y .num{background:var(--mark);color:var(--markInk)}
+.lane-h.o .num{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px}
+.step.y{border-color:var(--ink);background:linear-gradient(var(--card),var(--card)) padding-box;box-shadow:4px 4px 0 var(--mark)}
+.step.o{border-color:var(--accent)}
+.step b{font-weight:700}
+.step .t{font-weight:700;font-size:14.5px}
+.step .d{font-size:13px;color:var(--ink2);margin-top:2px}
+.step .tool{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.step+.step::before{content:"";position:absolute;left:22px;top:-13px;width:1.5px;height:12px;background:var(--ink3)}
+.loop{font-size:12.5px;color:var(--accent);font-weight:500;padding-left:4px}
+.arrow-out{font-size:13px;color:var(--ink2);border-top:1.5px dashed var(--line);padding-top:8px}
+/* lenses */
+.lenses{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.ladder{display:grid;gap:6px;margin-top:10px}
+.rung{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:10px;background:var(--soft)}
+.rung:first-child{background:var(--mark);color:var(--markInk)}
+.rung:first-child .small{color:var(--markInk)}
+.rung i{font:800 18px/1.2 var(--en);font-style:normal}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.trio div{border:1.5px solid var(--ink);border-radius:10px;padding:8px;text-align:center}
+.trio b{display:block;font-size:15px}
+.trio span{font-size:12px;color:var(--ink2)}
+.no{margin-top:10px;padding:8px 10px;border-radius:10px;border:1.5px dashed var(--ink3);font-size:13px;color:var(--ink2)}
+.qs{counter-reset:q;list-style:none;padding:0;display:grid;gap:6px;margin-top:10px}
+.qs li{counter-increment:q;display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
+.qs li::before{content:counter(q);width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 12px/22px var(--en);text-align:center}
+/* tables */
+.tbl{overflow-x:auto;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:8px 12px;border-bottom:1px solid var(--line)}
+th{font:700 12px/1.3 var(--en);letter-spacing:.06em;color:var(--ink3);background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
+.grp td{background:var(--soft);font:700 13.5px/1.4 var(--cn)!important;color:var(--ink)}
+.grp.y td{background:var(--mark);color:var(--markInk)}
+.grp.o td{background:var(--accentSoft)}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font:700 11px/1.6 var(--en);border:1px solid currentColor}
+.pill.f{color:var(--accent)} .pill.w{color:var(--ink2)}
+.score{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+.formula{font:700 17px/1.5 var(--en)}
+.formula .cn{font-family:var(--cn)}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.laws{counter-reset:l;list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:0}
+.laws li{counter-increment:l;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0;font-size:13.5px}
+.laws li::before{content:"铁律 " counter(l);display:block;font:700 11px/1.4 var(--en);letter-spacing:.08em;color:var(--accent);margin-bottom:2px}
+.cam{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cam div{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+.cam b{display:block;font:700 14px/1.3 var(--en)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--ink)}
+.foot{margin-top:40px;font-size:12.5px;color:var(--ink3)}
+@media (max-width:980px){.lanes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.lanes{grid-template-columns:1fr}.trio{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.card,.step{transition:transform .15s}.card:hover{transform:translateY(-2px)}}
+</style>
+
+<div class="wrap">
+  <h1>Video Boost <span>口播增强 · 流程画板</span></h1>
+  <div class="meta">
+    <span class="chip y">基线：剪辑师版本 <code>83f3325</code>（已在 GitHub）</span>
+    <span class="chip">待验证：+ 真 logo <code>db636d8</code>（分支 logo）</span>
+    <span class="chip">未采用：提速版（分支 experiments-speed）</span>
+  </div>
+  <p class="lede">一支单人口播视频进来，原片画面、声音、时长一律不动，只叠一层同步图形和运镜。整条流程分四个阶段，以 Eval 收尾。黄色标出剪辑师视角起作用的地方，橙色是门槛和返工点。</p>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--mark)"></i>剪辑师视角</span>
+    <span><i class="sw" style="background:var(--accent);border-color:var(--accent)"></i>门槛 / 打回返工</span>
+    <span><i class="sw" style="background:var(--card)"></i>常规步骤</span>
+  </div>
+
+  <!-- ============ 1. pipeline ============ -->
+  <section>
+    <div class="sec-h"><span class="tag">01</span><h2>整体流程</h2><p>每一步的产出物和用到的工具</p></div>
+    <div class="lanes">
+      <div class="lane">
+        <div class="lane-h"><span class="num">1</span><h3>素材准备</h3></div>
+        <div class="step"><div class="t">拷源片、转 SDR</div><div class="d">iPhone 的 HLG HDR 用 avconvert 转，只改标签会肤色发黄</div><div class="tool"><code>prep.sh</code></div></div>
+        <div class="step"><div class="t">转文字</div><div class="d">whisper medium、beam 5；一遍出句子、一遍出逐字时间</div></div>
+        <div class="step"><div class="t">漏句检查 + 烧录字幕检测</div><div class="d">原片自带字幕 → 默认关掉我们的字幕，原字幕当校对答案</div><div class="tool"><code>check_asr.py</code><code>detect_burned_captions.py</code></div></div>
+        <div class="step"><div class="t">校对字幕稿</div><div class="d">只改错字不改说法；<code>|</code> 换屏，<code>。</code> 句子边界；听不清的词三种方式重转</div><div class="tool"><code>script.txt</code><code>retranscribe.py</code></div></div>
+        <div class="step"><div class="t">逐字对时 + 合并过快的屏</div><div class="d">不晚于语音、起止 ±200ms；合并不跨句、不跨停顿，上限 14 字</div><div class="tool"><code>align.py</code><code>fix_caps.py</code></div></div>
+        <div class="arrow-out">产出：带逐字时间的字幕、发声区间、停顿表</div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-h y"><span class="num">2</span><h3>理解与设计</h3></div>
+        <div class="step"><div class="t">通读全文，理论证结构</div><div class="d">论点一句话；结构类型（路径 / 框架 / 并列 / 问题→解法 / 对比）；每段的角色和结论</div><div class="tool"><code>structure.md</code></div></div>
+        <div class="step"><div class="t">小标题 = 角色词 · 结论</div><div class="d">≤12 字，连起来读就是论证本身；驱动顶部进度标</div></div>
+        <div class="step y"><div class="t">列出口播里的品牌</div><div class="d">对照品牌词表，给出要先取的 logo</div><div class="tool"><code>brands.py</code><code>fetch_icons.sh</code></div></div>
+        <div class="step y"><div class="t">剪辑台本</div><div class="d">每段先问：做什么用？剪辑师会切到什么画面？素材到哪一级？见下方「剪辑师视角」</div><div class="tool"><code>cut.md</code></div></div>
+        <div class="step y"><div class="t">取真实素材、核对原文</div><div class="d">网页截图并定位原句；公开授权照片；口径要和口播一致</div><div class="tool"><code>grab.mjs</code><code>commons.py</code></div></div>
+        <div class="step"><div class="t">写图形和运镜</div><div class="d">时间一律用 <code>t('原话')</code> 取，不手填秒数；运镜写进 CAM</div><div class="tool"><code>beats.mjs</code></div></div>
+        <div class="arrow-out">产出：结构、台本、素材、分镜代码</div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-h y"><span class="num">3</span><h3>制作与审片</h3></div>
+        <div class="step"><div class="t">构建</div><div class="d">套主题皮肤、内联真 logo、手绘圈注（固定种子，每次一样）</div><div class="tool"><code>build.mjs</code><code>hyperframes lint</code></div></div>
+        <div class="step"><div class="t">草稿渲染</div><div class="d">低画质出一版，约 1.5 分钟</div></div>
+        <div class="step"><div class="t">关键帧拼图</div><div class="d">每段末尾一帧，示意界面 3–4 帧</div><div class="tool"><code>review.sh</code></div></div>
+        <div class="step y o"><div class="t">剪辑师审片（独立子 agent）</div><div class="d">只看拼图和台本，按 7 个问题逐段给「过 / 打回 + 理由」</div></div>
+        <div class="loop">↻ 打回的改完再拼图复审，审过才往下走</div>
+        <div class="step"><div class="t">正式渲染</div><div class="d">只渲染一次，后台跑</div><div class="tool"><code>output.mp4</code></div></div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-h o"><span class="num">4</span><h3>Eval 收尾</h3></div>
+        <div class="step"><div class="t">无头浏览器实测</div><div class="d">把时间线拨到每个图形，量出每段文字的实际字号和位置、字幕胶囊</div><div class="tool"><code>audit.mjs</code></div></div>
+        <div class="step"><div class="t">自动检查 + 人工评分表</div><div class="d">门槛 → 内容 / 运镜 / 剪辑 / 字号 / 安全区 / 字幕 → 人工 7 项</div><div class="tool"><code>evaluate.sh</code><code>eval.md</code></div></div>
+        <div class="step o"><div class="t">门槛不过不交付</div><div class="d">提醒逐条判断：能修就修、修完重跑；修不了的写理由</div></div>
+        <div class="step"><div class="t">交付说明</div><div class="d">门槛、自动分、剩下的提醒和理由；每个图形在哪一秒、给了观众什么；真实数据的链接；需要确认的转述和存疑字</div></div>
+        <div class="arrow-out">产出：成片（时长 = 原片）+ Eval 报告</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. editor's eye ============ -->
+  <section>
+    <div class="sec-h"><span class="tag">02</span><h2>剪辑师视角：每个图形要过的七道关</h2><p>先想「这里切到什么画面」，再想用哪个组件</p></div>
+    <div class="lenses">
+      <div class="card y">
+        <div class="k">视角 1 · 功能</div>
+        <h3>这张图做什么用？</h3>
+        <div class="trio">
+          <div><b>解释</b><span>耳朵接不住的结构</span></div>
+          <div><b>证明</b><span>让人相信是真的</span></div>
+          <div><b>重置注意力</b><span>太久没有变化</span></div>
+        </div>
+        <div class="no">三种都不是 → 不加图，人保持全屏。观点、情绪、过渡、金句都属于这一类。</div>
+      </div>
+
+      <div class="card y">
+        <div class="k">视角 2 · 素材等级</div>
+        <h3>剪辑师会切到什么画面？从高往低找</h3>
+        <div class="ladder">
+          <div class="rung"><i>1</i><div><b>真实素材</b><div class="small">新闻 / 官网截图（划出那句话）、真实照片、产品真实界面、真品牌 logo</div></div></div>
+          <div class="rung"><i>2</i><div><b>演示</b><div class="small">把口播说的操作真的演一遍：指令 → 步骤 → 产出物</div></div></div>
+          <div class="rung"><i>3</i><div><b>数据图</b><div class="small">数字有对比或变化才画</div></div></div>
+          <div class="rung"><i>4</i><div><b>文字卡</b><div class="small">只给演不出来的抽象概念</div></div></div>
+        </div>
+        <p class="small" style="margin-top:8px">用第 3、4 级必须写出为什么上不去，「方便」不算理由。口播提到真实存在的东西（新闻、报告、公司、产品、地方、人群），先试第 1 级。</p>
+      </div>
+
+      <div class="card y">
+        <div class="k">视角 3 · 一屏一事</div>
+        <h3>一个画面只讲一件事</h3>
+        <ul>
+          <li>复杂内容按口播顺序逐项进入，不一次摆出整张表</li>
+          <li>出现空格子等着填、大片留白，就拆开或换真实素材</li>
+          <li>有一个明确的焦点：荧光笔、圈注，或唯一的大数字</li>
+          <li>卡片不复述口播：关掉声音，这张图给了耳朵拿不到的东西吗？</li>
+        </ul>
+      </div>
+
+      <div class="card y">
+        <div class="k">视角 4 · 节奏</div>
+        <h3>什么时候出、停多久、什么时候走</h3>
+        <ul>
+          <li>图形里同一个画面状态停 6–8 秒以内，之后要有新元素、滚动或划重点</li>
+          <li>人单独出镜是喘气和建立信任；超过约 30 秒没有任何变化，补一处</li>
+          <li>入点对准关键词的第一个字；出点等这句话说完，不压句尾</li>
+          <li>全片 4–6 个图形就够，宁少勿滥</li>
+        </ul>
+      </div>
+
+      <div class="card y">
+        <div class="k">视角 5 · 强调手段</div>
+        <h3>不止加图</h3>
+        <ul>
+          <li><b>推近</b>：结构转折、关键判断，全片 3–4 处以内</li>
+          <li><b>硬切放大</b>：只给开头钩子，最多 1 次</li>
+          <li><b>荧光笔 / 圈注</b>：证据里那个数字，每个画面最多 2 处</li>
+          <li><b>回到全屏</b>：观点、情绪、金句；不为了「有东西」硬塞图</li>
+        </ul>
+      </div>
+
+      <div class="card y">
+        <div class="k">视角 6 · 真实与口径</div>
+        <h3>真实素材的底线</h3>
+        <ul>
+          <li>截图前读原文，确认数字真的在页面上</li>
+          <li>画面上写来源名和日期，地址栏写域名</li>
+          <li>只佐证口播说过的事，不引入新观点；地点、时间段、人群要对得上</li>
+          <li>公开图只用 CC0 / CC BY / CC BY-SA / 公有领域，署名照抄</li>
+          <li>不截登录页、付费墙、个人账号；示意界面标「示意」</li>
+        </ul>
+      </div>
+
+      <div class="card o" style="grid-column:1/-1">
+        <div class="k">视角 7 · 审片（渲染草稿之后，正式渲染之前）</div>
+        <h3>独立的「剪辑师」子 agent，只看拼图和台本，逐段回答</h3>
+        <div class="cols2">
+          <ol class="qs">
+            <li>这个画面关掉声音还成立吗？给了耳朵拿不到的东西吗？</li>
+            <li>能不能换成更高一级的素材（真实网页、照片、真实界面）？</li>
+            <li>是不是一屏塞了好几个想法？有没有空格子、大片留白、整张表一次摆出？</li>
+            <li>一眼能看出该看哪里吗？</li>
+          </ol>
+          <ol class="qs" start="5" style="counter-reset:q 4">
+            <li>提到的品牌、产品有没有带真 logo？</li>
+            <li>有没有业余感：装饰性的图、每句都有特效、字墙、挡脸、压字幕？</li>
+            <li>全片节奏：哪里太久没变化，哪里太挤？</li>
+          </ol>
+        </div>
+        <p class="small" style="margin-top:10px">结论只有两种：过，或打回并写明理由。打回的改完重新拼图复审，全部通过才出正式版。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. camera ============ -->
+  <section>
+    <div class="sec-h"><span class="tag">03</span><h2>运镜与机位</h2><p>人永远贴底居中，不缩到角落</p></div>
+    <div class="cols2">
+      <div class="card">
+        <h3>五种机位</h3>
+        <div class="cam">
+          <div><b>full 全屏</b>人是内容：钩子、观点、过渡、收尾</div>
+          <div><b>split 让位</b>人 58%，图形区约 540px；只在图形承载信息时</div>
+          <div><b>dense 密集</b>人 50%，多出的空间放第二层可视化，不放大字</div>
+          <div><b>push 慢推</b>1.00→1.06，关键判断、回顾</div>
+          <div><b>punch 硬切</b>放大 1.14，只给钩子金句</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>移动规则</h3>
+        <ul>
+          <li>让位要比图形早到：只往前找停顿</li>
+          <li>回全屏、推近都吸到说话的停顿里，不在词中间动</li>
+          <li>两个图形间隔不到 4 秒，中间不回全屏，避免一缩一放</li>
+          <li>平台界面会盖住边角：进度标和 logo 在 150px 以下，字幕底边距 15–20%</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. eval ============ -->
+  <section>
+    <div class="sec-h"><span class="tag">04</span><h2>Eval 标准</h2><p>门槛 → 自动检查 → 人工评分；每一条都能追到你拍过板的决定</p></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>编号</th><th>检查什么</th><th>怎么判</th><th>为什么有这条</th></tr></thead>
+        <tbody>
+          <tr class="grp o"><td colspan="4">A 门槛：任何一项不过 = 不交付</td></tr>
+          <tr><td>A1</td><td>成片时长 = 原片</td><td>相差 ≤ 0.05 秒</td><td>只加不改</td></tr>
+          <tr><td>A2</td><td>渲染稳定</td><td>HyperFrames lint 0 错误</td><td>无闪屏、无错位</td></tr>
+          <tr><td>A3</td><td>有语音就有字幕</td><td>每段发声被字幕覆盖 ≥ 50%</td><td>字幕红线（原片自带字幕时不适用）</td></tr>
+          <tr><td>A4</td><td>没语音不出字幕</td><td>每屏至少 0.15 秒落在发声区</td><td>字幕红线</td></tr>
+          <tr><td>A5</td><td>字幕节奏</td><td>不到 1 秒或超过 9 字/秒的屏 ≤ 10%</td><td>竖屏 ≤10 字/屏</td></tr>
+
+          <tr class="grp"><td colspan="4">B 内容</td></tr>
+          <tr><td>B1</td><td>卡片不复述口播</td><td>图形文字和同时段字幕的重合率，平均 ≤ 45%</td><td>「你是把他说的话又可视化了」</td></tr>
+          <tr><td>B2</td><td>口播外的数字有来源</td><td>没来源就失败；示意界面里的数字人工确认</td><td>示意 ≠ 编造</td></tr>
+          <tr><td>B3</td><td>示意界面标「示意」</td><td>示意类组件必须带标注</td><td>「可以示意」的前提</td></tr>
+          <tr><td>B4</td><td>相邻不同版式</td><td>间隔不到 4 秒的两个图形不能同一组件</td><td>版面轮换</td></tr>
+          <tr><td>B5</td><td>图形密度</td><td>覆盖 30–75% 时长，每分钟 1–4 个</td><td>太密 vs 只留 4–6 个</td></tr>
+          <tr><td>B6</td><td>单段 ≤ 20 秒</td><td>超过记提醒，承接型可接受</td><td>划段规则</td></tr>
+
+          <tr class="grp"><td colspan="4">C 运镜</td></tr>
+          <tr><td>C1</td><td>镜头移动落在停顿</td><td>让位、回全屏在说话间隙 ±0.15 秒内</td><td>不在词中间动</td></tr>
+          <tr><td>C2</td><td>不一缩一放</td><td>全屏不到 4 秒又让位记提醒</td><td>运镜规则</td></tr>
+          <tr><td>C3</td><td>图形在场人一定让位</td><td>图形 35% / 65% / 90% 处都必须是让位</td><td>不挡脸</td></tr>
+          <tr><td>C4</td><td>硬切只给钩子</td><td>≤ 1 次，且在前 15%</td><td>punch 规则</td></tr>
+          <tr><td>C5</td><td>人单独在场占比</td><td>25–60%</td><td>「人是内容」</td></tr>
+          <tr><td>C6</td><td>让位先于图形入场</td><td>镜头开始让位不晚于图形出现</td><td>落位要早于图形</td></tr>
+
+          <tr class="grp y"><td colspan="4">E 剪辑（剪辑师视角的自动部分）</td></tr>
+          <tr><td>E1</td><td>素材等级</td><td>文字卡不超过一半，且至少一个真实素材或演示</td><td>盲测片全是表格和文字卡</td></tr>
+          <tr><td>E2</td><td>图形不静止</td><td>一个图形里超过 8 秒没有任何动作记提醒</td><td>单个画面停 5–6 秒最好读</td></tr>
+          <tr><td>E3</td><td>全屏不冷场</td><td>人单独出镜、没图也没推近，超过 30 秒记提醒</td><td>人脸与画面约 20–40 秒交替</td></tr>
+          <tr><td>E4</td><td>品牌带真 logo</td><td>图形里出现品牌名却没带 logo 记提醒</td><td>你认可「加真 logo」那版（待验证分支）</td></tr>
+
+          <tr class="grp"><td colspan="4">T / S 字号与安全区（无头浏览器实测）</td></tr>
+          <tr><td>T1</td><td>字号都在阶梯上</td><td>只允许 22 / 28 / 36 / 54 / 96 / 140</td><td>「字整体偏大、层级乱」</td></tr>
+          <tr><td>T2</td><td>一个图形 ≤ 3 档阅读字号</td><td>4 档提醒，5 档以上失败</td><td>层级清楚</td></tr>
+          <tr><td>T3</td><td>没有小于 22px 的字</td><td>动画中途的缩放不算</td><td>手机可读下限</td></tr>
+          <tr><td>T4</td><td>字幕是最大的阅读文字</td><td>比字幕大的元素每图最多 1 个</td><td>BBC 字幕规范</td></tr>
+          <tr><td>T5</td><td>最小字号只给来源和标签</td><td>其余小字 ≤ 25%</td><td>层级规则</td></tr>
+          <tr><td>T6</td><td>文字没被裁掉一半</td><td>文字框越出容器即失败</td><td>你截图指出简历卡被切</td></tr>
+          <tr><td>S1</td><td>避开平台界面</td><td>小红书上 150 / 下 200px（可切抖音、Reels、Shorts）</td><td>平台安全区</td></tr>
+
+          <tr class="grp"><td colspan="4">R 字幕（对照你的《字幕增强 Eval》红线；原片自带字幕时只查不出现双字幕）</td></tr>
+          <tr><td>R0</td><td>不出现双字幕</td><td>原片有字幕时我们的必须关</td><td>TS-11</td></tr>
+          <tr><td>R11–R13</td><td>时长与同步</td><td>单屏 ≤ 7 秒；不晚于语音；起止偏差 ≤ 200ms 的屏 ≥ 95%</td><td>R-11 / R-12 / R-13</td></tr>
+          <tr><td>R15–R21</td><td>版式</td><td>单行；字号 3–4% 画面高；居中、底边距 15–20%</td><td>R-15 / R-16 / R-19–21</td></tr>
+          <tr><td>R24–R35</td><td>不打架、不断词</td><td>不压图形文字；数字和单位、专名不拆屏；不以挂空的「的 / 和」结尾</td><td>R-24 / R-27–30 / R-35</td></tr>
+
+          <tr class="grp y"><td colspan="4">H 人工评分（1–5 分，依据写到秒）</td></tr>
+          <tr><td>H1</td><td>静音测试</td><td>5 分：每张图都给了耳朵拿不到的东西；1 分：图上就是字幕的缩写</td><td>不复述</td></tr>
+          <tr><td>H2</td><td>演示力</td><td>5 分：真实界面一步步演到产出物；1 分：用文字卡描述操作</td><td>能演就演</td></tr>
+          <tr><td>H3</td><td>事实诚实</td><td>5 分：数字可点开核对、示意明确标注；1 分：有编造</td><td>示意 ≠ 编造</td></tr>
+          <tr><td>H4</td><td>品牌一致</td><td>5 分：只用主题色，强调色一屏一处</td><td>设计系统用你的</td></tr>
+          <tr><td>H5</td><td>节奏与留白</td><td>5 分：观点时全屏、信息时让位，有呼吸</td><td>人是内容</td></tr>
+          <tr><td>H6</td><td>可读性</td><td>5 分：手机上一眼可读，字幕始终清楚</td><td>手机观看</td></tr>
+          <tr><td>H7</td><td>剪辑感</td><td>5 分：像剪辑师切的画面，一屏一事、有焦点；1 分：字墙、空格子、整表</td><td>「可视化没有之前好了」</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="score">
+      <div class="card"><div class="k">自动分</div><div class="formula">B + C + E + T + S + R</div><p class="small">每项通过记 1、提醒记 0.5、失败记 0，取平均 ×100</p></div>
+      <div class="card"><div class="k">总分</div><div class="formula"><span class="cn">门槛</span> × (<span class="cn">自动分</span> × 40% + <span class="cn">人工均分</span>/5 × 60%)</div><p class="small">人工占六成：剪辑感只有人看得出来</p></div>
+      <div class="card o"><div class="k">怎么用</div><p><b>≥ 85</b> 直接发　<b>70–85</b> 修完提醒再发　<b>&lt; 70</b> 返工</p></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="k">自动检查的盲区</div>
+      <ul>
+        <li><b>剪辑感测不出来。</b>盲测 5 自动分 93，和你喜欢的剪辑师版一样，你的评价却是「好差」。所以版本对比必须并排看成片，不能只看分数。</li>
+        <li>B1 分不清「列举」和「复述」：并列清单天然和原话重合，提醒后人工判断。</li>
+        <li>元素压脸、图形之间互相遮挡，还要靠拼图人工看。</li>
+        <li>颜色是否越出主题靠 H4 人工判断。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 5. laws ============ -->
+  <section>
+    <div class="sec-h"><span class="tag">05</span><h2>铁律与否决清单</h2><p>迭代里你明确拍板的，违反就返工</p></div>
+    <ol class="laws">
+      <li><b>只加不改</b>：原片画面、声音、时长、镜头顺序一律不动；CTA 也只叠在最后几秒</li>
+      <li><b>卡片不复述口播</b>：关掉声音和字幕，这张图多给了什么？只是同样的字就删</li>
+      <li><b>能演就别写</b>：口播说用某工具做了事，就把真实界面和产出物演出来，不用灰条占位</li>
+      <li><b>示意 ≠ 编造</b>：示意界面标「示意」；数字和来源都要真实检索，不带假热度、假点赞</li>
+      <li><b>不挡脸、不挤</b>：人贴底居中，全屏 / 58% / 50%，不做角落画中画</li>
+      <li><b>皮肤 = 主题</b>：默认你的 Knock〃 设计系统 B 线密度；换主题只换主题文件</li>
+      <li><b>小标题先理结构</b>：通读全文写论证结构，再写「角色词 · 结论」</li>
+    </ol>
+    <div class="card" style="margin-top:16px">
+      <div class="k">已否决，不再回头</div>
+      <p class="small">卡片把口播缩写一遍 · 示意界面用灰条占位 · dense 时放大字号 · 小标题按话题逐段起名 · 角落画中画 · Claude 风格皮肤 · Knock 三色大面积铺屏 · 每段必增强 · 用模糊带遮原片字幕 · 只按「内容形状」选组件（变成一堆表格和文字卡）· 为提速改创作环节（盲测 4、5）</p>
+    </div>
+  </section>
+
+  <p class="foot">内容对照 skill 当前版本整理：SKILL.md、references/editor.md、rules.md、typography.md、eval.md。2026-10-03。</p>
+</div>

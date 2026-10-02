@@ -2,6 +2,8 @@
 
 把一支单人口播视频做成「原片 + 同步图形层」的成片：原片画面、声音、时长一律不动，只叠加卡拉 OK 字幕、常驻进度、机制图、真实工具界面示意（带真 logo、真实检索的数据）、结尾 CTA，以及按规则走的运镜。渲染引擎是 [HyperFrames](https://www.npmjs.com/package/hyperframes)。
 
+整体流程、剪辑师视角和 Eval 标准的一页总览：[`board/index.html`](board/index.html)（下载后用浏览器打开）。
+
 方法、口味与规则全在 skill 里：[`skill/video-boost/SKILL.md`](skill/video-boost/SKILL.md)。参考文档：
 - [`rules.md`](skill/video-boost/references/rules.md)：负荷类型、划段、模板入场顺序、论证结构 → 小标题、机位密度
 - [`typography.md`](skill/video-boost/references/typography.md)：字号阶梯、层级、平台安全区（附业界依据）
