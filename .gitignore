@@ -21,3 +21,9 @@ build5.mjs
 build.mjs.bak-pretheme
 
 .private-terms
+
+# private working notes
+CONTEXT_SPEC.md
+HANDOFF.md
+demo/
+tools/

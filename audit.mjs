@@ -56,18 +56,29 @@ const measure = (sel, t) => page.evaluate((sel, t) => {
   return out;
 }, sel, t);
 
+// visible caption pill at time t (subtitle Eval R-15/16/19/20/21/24)
+const capAt = (t) => page.evaluate((t) => {
+  window.__timelines.main.seek(t, false);
+  for (const el of document.querySelectorAll('.cap')) { const s = +el.dataset.start, d = +el.dataset.duration; el.style.visibility = t >= s && t < s + d ? 'visible' : 'hidden'; }
+  const vis = [...document.querySelectorAll('.cap')].find((el) => el.style.visibility === 'visible'); if (!vis) return null;
+  const p = vis.querySelector('.pill'), b = p.getBoundingClientRect(), cs = getComputedStyle(p), fs = parseFloat(cs.fontSize);
+  const lh = parseFloat(cs.lineHeight) || fs * 1.2, padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  return { box: [b.left, b.top, b.right, b.bottom].map(Math.round), fs: Math.round(fs), lines: Math.round((p.clientHeight - padV) / lh), text: p.textContent.trim().slice(0, 16) };
+}, t);
 const beats = [];
 for (const b of M.beats) {
   const samples = [];
   for (const f of [.55, .92]) samples.push(...await measure(`#b${b.i}-in`, b.s + (b.e - b.s) * f));
   const seen = new Map(); for (const x of samples) seen.set(x.text + x.px + x.box.join(), x);   // dedupe across the two samples
-  beats.push({ i: b.i, c: b.c, below: b.below || null, s: b.s, e: b.e, items: [...seen.values()] });
+  const caps = []; for (const f of [.55, .92]) { const c = await capAt(b.s + (b.e - b.s) * f); if (c) caps.push(c); }
+  beats.push({ i: b.i, c: b.c, below: b.below || null, s: b.s, e: b.e, items: [...seen.values()], caps });
 }
 // chrome (tracker, logo, captions) once, at a mid-video time
 const mid = M.D * .5;
 const chrome = { tracker: await measure('.rail', mid).then(() => page.evaluate(() => { const e = document.querySelector('.pts, .chap'); if (!e) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom].map(Math.round); })),
   logo: await page.evaluate(() => { const b = document.querySelector('.logo').getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom].map(Math.round); }),
-  captions: await page.evaluate(() => { const b = document.querySelector('.caps').getBoundingClientRect(); const p = document.querySelector('.cap .pill'); return { box: [b.left, b.top, b.right, b.bottom].map(Math.round), px: p ? Math.round(parseFloat(getComputedStyle(p).fontSize)) : null }; }) };
+  captions: await page.evaluate(() => { const c = document.querySelector('.caps'); const b = c.getBoundingClientRect(); if (!b.width) return null; const p = document.querySelector('.cap .pill'); return { box: [b.left, b.top, b.right, b.bottom].map(Math.round), px: p ? Math.round(parseFloat(getComputedStyle(p).fontSize)) : null }; }) };
+const capSamples = []; for (const f of [.1, .3, .5, .7, .9]) { const c = await capAt(M.D * f); if (c) capSamples.push(c); }
 await browser.close();
-fs.writeFileSync(path.join(pub, 'audit.json'), JSON.stringify({ platform, safe: SAFE, chrome, beats }, null, 1));
+fs.writeFileSync(path.join(pub, 'audit.json'), JSON.stringify({ platform, safe: SAFE, chrome, beats, capSamples }, null, 1));
 console.log(`audit → ${path.relative(process.cwd(), path.join(pub, 'audit.json'))}  (${beats.length} graphics, platform ${platform})`);

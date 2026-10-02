@@ -13,5 +13,6 @@ ffmpeg -v error -y -i "$R/source.mp4" -ac 1 -ar 16000 "$R/audio.wav"
 .venv/bin/python transcribe_beam.py "$R" 2>/dev/null | grep -v -E "^(whisper|ggml)"
 python3 resegment.py "$R"
 python3 check_asr.py "$R"
+.venv/bin/python detect_burned_captions.py "$R/source.mp4" > "$R/source_meta.json"; if grep -q '"burned": true' "$R/source_meta.json"; then echo "源片自带烧录字幕（$(cat "$R/source_meta.json")）→ 默认关闭我们的字幕；要强制打开，在 beats.mjs 返回 CAPTIONS: 'on'"; fi
 DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$R/source.mp4"); echo "时长 $DUR s"
 echo "next: write $R/script.txt (proofread, | = caption break, ≤10 字/屏), then: .venv/bin/python align.py $R $DUR \&\& .venv/bin/python fix_caps.py $R $DUR"

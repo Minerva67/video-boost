@@ -6,7 +6,7 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 # Video Boost（口播增强）
 
 工程目录：仓库根目录（公开仓库 github.com/Minerva67/video-boost；本机在 `~/CC/knock-video-boost/`）。HyperFrames 渲染 + GSAP 时间轴 + 自建组件库。
-样板：`runs/example/beats.mjs`（结构模板）+ `references/components.md`（每个组件的数据写法）。**判断规则全在 `references/rules.md`**（负荷类型、划段、版式轮换、模板入场顺序、小标题），不依赖任何外部文档。本机若有 `runs/v5/`（大厂转型 AI，用户评「这一版很好」）、`runs/ai-value/` 可对照，但它们不进公开仓库。
+样板：`runs/example/beats.mjs`（结构模板）+ `references/components.md`（每个组件的数据写法）。**判断规则全在 `references/rules.md`**（负荷类型、划段、版式轮换、模板入场顺序、小标题），不依赖任何外部文档。
 
 ## 铁律（用户反复确认过的，违反即返工）
 
@@ -25,7 +25,7 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 # → 读 runs/<name>/segs_beam.json，校对写 runs/<name>/script.txt（| = 字幕断点）
 .venv/bin/python align.py runs/<name> <时长>       # 校对文本对齐回 ASR 字级时间 + VAD 校时 → transcript.json / captions.json / voiced.json
 .venv/bin/python fix_caps.py runs/<name> <时长>    # 自动合并 <1s 或 >9字/s 的字幕屏，重对齐（不跨章节/句子/停顿合并）
-# → 写 runs/<name>/beats.mjs（从 runs/v5/beats.mjs 复制改）
+# → 先写 runs/<name>/structure.md，再写 runs/<name>/beats.mjs（从 runs/example/beats.mjs 复制改）
 node build.mjs runs/<name>
 npx hyperframes lint runs/<name>/public            # 0 error 即可（caption 的 nested 警告是已知的）
 HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
@@ -40,12 +40,11 @@ HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google 
 环境：ffmpeg/ffprobe 在 `~/.local/bin`；whisper 模型 `~/.cache/kvb-models/ggml-medium-q5_0.bin`（被清盘删过一次，prep.sh 会自动重下，515MB）；渲染用系统 Chrome。
 
 ### 校对 script.txt 的要点
-- **先看 prep 输出的「ASR 覆盖检查」**：`check_asr.py` 会列出两类问题。①有声音但 ASR 没转出来的段落；②ASR 转出来了、但分段稿里没有的句子。这两类都要逐条切片重转，补进 script.txt。
-- 切片重转的 initial_prompt **只塞 3–5 个本段会出现的术语**。塞太多，模型会把术语表本身当成内容输出。
-- 字幕不带句末标点（逗号、句号去掉），问号、感叹号保留。
-- 只改错字、不改说法；去气口（嗯/呃）可以，不润色不补词。
-- 拿不准的词：把那几秒切出来，用带术语的 initial_prompt 再转一遍（例：「大厂人转型AI，会议纪要，Claude Code，Codex」）。专名按真名写（ClockCode→Claude Code，Codeash→Codex，ChadGBT→ChatGPT）。仍不确定的，交付时列给用户听。
-- 断屏：竖屏 ≤10 字/屏（拉丁字母算半个），在语义停顿处断；专名、数字+单位不拆。语速快时 fix_caps 会合并，剩下 0.9s 左右的几屏可接受，交付时说明。
+- **先看 prep 的两项输出**：①「ASR 覆盖检查」，漏句要逐条重转补进稿子；②「源片自带烧录字幕」，检测到就默认关掉我们的字幕（见 `rules.md` §8）。
+- **格式**：`|` 是换屏；句子结束处写 `。`，它只当边界、不显示；问号、感叹号照常保留；其余标点不写。
+- 只改错字、不改说法；去气口（嗯/呃）可以，不润色不补词。专名按真名写（ClockCode→Claude Code，Codeash→Codex）。
+- **听不清的词**：`.venv/bin/python retranscribe.py runs/<name> <起> <止> --terms "3–5 个本段术语"`，会给出原速、加术语、0.8 倍慢放三种结果。仍不确定的，交付时带时间列给用户听。
+- 断屏：竖屏 ≤10 字/屏（拉丁字母算半个），在语义停顿处断；专名、数字+单位不拆；不以挂空的「的/和/在」结尾。语速快时 fix_caps 会在不跨句的前提下合并，上限 14 字。
 
 ## 主题（换设计系统）
 组件里不写死任何颜色，全部走角色（`brand/themes/<name>/theme.json`）：
@@ -74,22 +73,16 @@ HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google 
 - 这里在**描述一个操作或产出物**吗？（「我会让 Claude Code 去…」「简历要改成…」「做一个作品集」）→ **示意界面**（最值钱的一类）
 - 这里只是观点/过渡/情绪/口头总结？→ **全屏，不加图**（可以配慢推）
 
-### 第二步：组件选型（`components.mjs`，数据结构见 references/components.md）
-| 场景 | 组件 | 本片用法 |
-|---|---|---|
-| 全片有「N 点」结构 | 常驻进度（build 自动，由 CH + TRACK 生成） | 开场「4 点」空格 → 当前点黄底 → 讲完的打勾 → 回顾全勾 |
-| 趋势/此消彼长的机制 | `trend` | 工具门槛一路降 vs 行业 know-how 不降，两线间距 = 企业买的东西 |
-| 推理链（A 本质是 B，所以 C） | `chain` | AIGC 视频工作流 → 内容创作 → 用户 → 对口经验 |
-| 提到用 AI 工具干活 | `cc`（Claude Code 会话） | 选题：指令→WebSearch/Fetch→Top10 表→对标博主→选题定了；调研：指令→4 次工具调用→报告(每行来源标签)→已保存 |
-| 提到简历/个人介绍要改 | `resume` | 两条经历划掉重写 + HR 扫描带 + 6 个关键词逐个命中 |
-| 提到作品集/项目 | `folio` | 日常用法变灰 → 3 张项目卡 → 业务重构卡（手工 → agent） |
-| 「A 能做 90%」类占比/减法 | `checktable` | 一款 AI 写作工具功能表：你的产品全勾 → ChatGPT 勾 9 行 → 剩下那行点亮（ai-value 片） |
-| 「模型每升级一次…」类演进 | `ctxline` | 真实上下文窗口 4K→128K→1M（带日期与来源），补丁块随节点碎掉 |
-| 「X 一定会去做 Y」类判断 | `occupied` | 模型公司已上线的产品逐个落位 + 横向↔垂直危险度色带（真实产品，标截至日期） |
-| 口播出现「留言/关注/私信」 | `cta` | 贴字幕带上方滑入，按钮敲两下，停到片尾 |
-| 其他（老组件，按 PRD 负荷类型） | `stat` `share` `definition` `split` `notthis` `lines` `ladder` `grid` `gauge` | 只在真有数字/定义/对比/枚举时用，且不复述原话 |
+### 第二步：组件选型——按内容形状，不按题材
+先看这一段的**内容形状**（并列几项？一步推一步？此消彼长？在描述一个操作？），再到 `references/rules.md` §6 的「内容形状 → 组件」表里找。那张表给了每个组件在观点、故事、教程、数据四类题材里的用法。组件写法见 `references/components.md`。
 
-HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-comment-card / claude-exchange / chatgpt-exchange / code-typing 等现成块，但自带平台配色和假账号/假评论/假点赞——**只借动作，换 Knock 皮，不用假社交证明**。新组件写进 `components.mjs` + `brand/components.css`，入场顺序遵循用户《可视化选型规范 · 30 模板》（（本地私有文档））。
+- 全片有「N 点」结构时，进度标由 build 根据 CH + TRACK 自动生成。
+- 口播在描述一个操作或产出物时，优先用示意界面（`cc` / `folio` / `resume` / `checktable`）演出来。它们不局限于 AI 工具：`cc` 能演任何「指令 → 步骤 → 产出」的软件操作。
+- 口播出现「留言 / 关注 / 私信」时，用 `cta`。
+- 库里没有合适的组件：按 `components.md` 末尾的「新组件清单」新写一个。
+- 想用口播外的真实数据，先看 `rules.md` §7 的边界。
+
+HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-comment-card / claude-exchange / chatgpt-exchange / code-typing 等现成块，但自带平台配色和假账号/假评论/假点赞——**只借动作，换 Knock 皮，不用假社交证明**。新组件写进 `components.mjs` + `brand/components.css`，入场顺序遵循 `references/rules.md` §2；写法清单见 `references/components.md` 末尾的「新组件清单」。
 
 ### 字号（不按感觉定）
 所有图形文字只用 6 档字号：hero 140 / display 96 / title 54 / body 36 / small 28 / micro 22，字幕 76 是画面里最大的阅读文字。一个图形最多 3 档；dense 不放大字号。规范、业界依据和平台安全区见 `references/typography.md`，由 Eval 的 T1–T5、S1 实测检查。

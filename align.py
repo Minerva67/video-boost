@@ -24,7 +24,7 @@ for t in toks:
 schars, scap = [], []
 for ci, cap in enumerate(script.split('|')):
     for c in cap:
-        if c.isspace(): continue
+        if c.isspace() or c == '。': continue   # 。 marks a sentence end in script.txt (boundary only, never displayed)
         schars.append(c); scap.append(ci)
 
 # normalise digits spoken as Chinese numerals in ASR (九十 vs 90 etc.) — matcher works on raw chars; interpolation covers the rest
@@ -111,43 +111,33 @@ caps = []
 texts = script.split('|')
 for ci, text in enumerate(texts):
     idx = [k for k in range(N) if scap[k] == ci]
-    caps.append({'text': text.strip(), 'start': st[idx[0]], 'end': en[idx[-1]]})
+    caps.append({'text': text.strip().rstrip('。').replace('。', ''), 'sentence_end': text.strip()[-1:] in '。？！?!', 'start': st[idx[0]], 'end': en[idx[-1]]})
 
-onsets = [r[0] for r in VR]
-for c in caps:
-    near = min(onsets, key=lambda o: abs(o - c['start']))
-    if abs(near - c['start']) <= 0.35: c['start'] = near
-for k in range(len(caps) - 1):
-    caps[k]['end'] = max(caps[k]['end'], caps[k + 1]['start'] - 0.02) if caps[k + 1]['start'] - caps[k]['end'] < 0.6 else caps[k]['end']
-# timing rules: appear ≤80ms early; min 1.0s; max 7s; ≤9 chars/s (CJK) ; no overlap; hold across tiny gaps
+# timing rules (aligned with the user's subtitle Eval, R-10..R-13):
+#   R-12 a cue never appears after its first spoken character; R-13 start and end stay within ±200 ms of the speech;
+#   R-11 ≤7 s; R-10 ≥1 s is reached by merging short screens (fix_caps.py), never by delaying the next cue.
 def weight(s):  # latin letters count half
     return sum(0.5 if re.match(r'[A-Za-z0-9.]', ch) else 1 for ch in s if not ch.isspace())
+DUR = float(sys.argv[2]) if len(sys.argv) > 2 else 1e9
+LEAD, TAIL = 0.05, 0.18
 for k, c in enumerate(caps):
-    c['start'] = max(0, c['start'] - 0.08)
-    nxt = caps[k + 1]['start'] - 0.08 if k + 1 < len(caps) else c['end'] + 0.6
-    gap = nxt - c['end']
-    if gap < 0.6: c['end'] = nxt           # bridge short pauses
+    s0, e0 = c['start'], c['end']                      # first / last character of this cue (VAD-retimed)
+    c['s0'], c['e0'] = s0, e0
+    c['start'] = max(0, s0 - LEAD)
+    nxt = caps[k + 1]['start'] if k + 1 < len(caps) else e0 + 1
+    c['end'] = min(e0 + TAIL, nxt - LEAD - 0.02) if nxt - e0 > 0.2 else max(e0, nxt - LEAD - 0.02)   # bridge only gaps < 200 ms
     need = max(1.0, weight(c['text']) / 9)
-    if c['end'] - c['start'] < need: c['end'] = min(c['start'] + need, nxt if nxt > c['start'] + 0.5 else c['start'] + need)
+    if c['end'] - c['start'] < need:                   # use the ±200 ms allowance on both ends, no further
+        c['start'] = max(s0 - 0.2, 0, min(c['start'], c['end'] - need))
+        if k and caps[k - 1]['end'] > c['start'] - 0.02: caps[k - 1]['end'] = c['start'] - 0.02   # trim the previous cue instead of delaying this one (R-12)
+        c['end'] = min(max(c['end'], c['start'] + need), e0 + 0.2, nxt - LEAD - 0.02)
     c['end'] = min(c['end'], c['start'] + 7)
 for k in range(len(caps) - 1):
-    caps[k]['end'] = min(caps[k]['end'], caps[k + 1]['start'] - 0.08)  # no overlap
-# balance: a caption shorter than its need borrows from neighbours (≤0.35s lead / lag each side)
-DUR = float(sys.argv[2]) if len(sys.argv) > 2 else 1e9
-def need(c): return max(1.0, weight(c['text']) / 9)
-for _ in range(3):
-    for k, c in enumerate(caps):
-        short = need(c) - (c['end'] - c['start'])
-        if short <= 0: continue
-        if k + 1 < len(caps):   # take from next (next appears a bit later)
-            nx = caps[k + 1]; slack = (nx['end'] - nx['start']) - need(nx)
-            take = max(0, min(short, slack, 0.35)); c['end'] += take; nx['start'] += take; short -= take
-        if short > 0 and k > 0:  # take from previous (previous leaves a bit earlier)
-            pv = caps[k - 1]; slack = (pv['end'] - pv['start']) - need(pv)
-            take = max(0, min(short, slack, 0.35)); c['start'] -= take; pv['end'] -= take; short -= take
+    caps[k]['end'] = min(caps[k]['end'], caps[k + 1]['start'] - 0.02)   # no overlap
+for c in caps: c['start'] = min(c['start'], c['s0'])                   # R-12 hard guarantee
 caps[-1]['end'] = min(caps[-1]['end'], DUR - 0.02)
 for c in caps:
-    c['start'] = round(c['start'], 3); c['end'] = round(c['end'], 3)
+    c['start'] = round(c['start'], 3); c['end'] = round(c['end'], 3); c['s0'] = round(c['s0'], 3); c['e0'] = round(c['e0'], 3)
     c['cps'] = round(weight(c['text']) / max(c['end'] - c['start'], 0.01), 1)
 json.dump(caps, open(f'{run}/captions.json', 'w'), ensure_ascii=False, indent=1)
 

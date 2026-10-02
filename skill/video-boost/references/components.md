@@ -1,4 +1,4 @@
-# 组件数据结构（从 runs/v5/beats.mjs 摘出的真实用例）
+# 组件数据结构（每个组件一个真实用例）
 所有组件签名：`C[name](id, data) → { html, js }`，时间都是绝对秒数，用 `t('…原话…')` 取。beat 外层：`{ c: '组件名', s: 起, e: 止, d: data }`；`title`/`cta` 不包 `.zone`，其余包在顶部 550px 图形区里。
 
 ## `folio`
@@ -136,3 +136,14 @@ const CAM = [
 - `notthis` 反例对照 {title?, wrongLab, wrong, wrongAt, strikeAt, rightLab, right, rightAt, options?[{t,at}], or, optSize}
 - `lines` ENU 逐行高亮 · `ladder` 递减阶梯 · `grid` ENU-02 网格带勾 {title, sub, cellsAt, cols, items[{t,at}], allAt} · `gauge` 仪表盘隐喻
 - 示意旧版 `term`（灰条占位终端）已被 `cc` 取代，别用。
+
+
+## 新组件清单（库里没有合适组件、要新写一个时）
+1. 先查 `rules.md` §2 的模板表和 §6 的内容形状表，确认确实没有可用的；能用参数调出来的，不新写。
+2. 写在 `components.mjs`：签名 `name: (id, d) => ({ html, js })`。所有颜色用 `${TH.x}`，不写裸色值；文字用 `md()` 包一下，这样 `:logo:` 和 `**加粗**` 才能生效。
+3. 根元素要带 `id="${id}"`，否则按「id + 类名」选元素的动画会失效。子元素 id 一律加 `${id}-` 前缀。
+4. 入场顺序按 `rules.md` §2 对应模板的规定写死，元素在关键词说出的那一刻出现（数据里用 `at: t('…原话…')`）。
+5. 样式写进 `brand/components.css`：字号只用 `var(--fs-…)`（阶梯见 `typography.md`），颜色只用主题变量，高度用 `var(--zh)`，这样放进 dense 的 760px 区也能自适应。
+6. 一个图形最多 3 档阅读字号；不要比字幕还大，那一个关键数字除外。
+7. 动画只用 GSAP（transform 和 opacity），不用 CSS animation，也不动 `left` / `top`，否则不能逐帧渲染。
+8. 写完跑 `node build.mjs` 加 lint，再用 snapshot 看单帧，最后 `./evaluate.sh` 检查。

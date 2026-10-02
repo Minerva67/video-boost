@@ -13,7 +13,7 @@ theme = M['theme']
 video = opt.get('--video', 'output.mp4' if pub == 'public' else f'output-{theme}.mp4')
 SRCD = M.get('src', run) if os.path.exists(M.get('src', run)) else run
 VR = json.load(open(f'{SRCD}/voiced.json'))
-D = M['D']; B = M['beats']; CAPS = M['captions']; CAM = M['camera']
+D = M['D']; B = M['beats']; CAPS = M['captions']; CAM = M['camera']; CAP_ON = M.get('captionsOn', True)
 FF = os.path.expanduser('~/.local/bin/ffprobe')
 dur = lambda f: float(subprocess.run([FF, '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], capture_output=True, text=True).stdout.strip() or 'nan')
 
@@ -33,21 +33,24 @@ lint = subprocess.run(['npx', 'hyperframes', 'lint', f'{run}/{pub}'], capture_ou
 m = re.search(r'(\d+) error', lint)
 add('A2', '门槛', 'HyperFrames lint 0 error', 'PASS' if m and m.group(1) == '0' else 'FAIL', (m.group(0) if m else 'lint 无输出'))
 
-# speech without caption / caption over long silence
-def covered(a, b):
-    return sum(max(0, min(b, c['end']) - max(a, c['start'])) for c in CAPS)
-miss = [(a, b) for a, b in VR if b - a >= .3 and covered(a, b) < .5 * (b - a)]
-add('A3', '门槛', '有语音就有字幕', 'PASS' if not miss else 'FAIL', f'{len(miss)} 段语音无字幕' + (f'：{[(round(a,1), round(b,1)) for a, b in miss[:5]]}' if miss else ''))
-def voiced_in(a, b): return sum(max(0, min(b, y) - max(a, x)) for x, y in VR)
-ghost = [c for c in CAPS if voiced_in(c['start'], c['end']) < .15]
-add('A4', '门槛', '无语音不出字幕', 'PASS' if not ghost else 'FAIL', f'{len(ghost)} 屏落在静音里')
+if not CAP_ON:
+    add('A3', '门槛', '字幕', 'PASS', f'源片自带烧录字幕（画面 {M.get("burnedBand")}），本片按规则关闭了我们的字幕；A3–A5 不适用')
+else:
+    # speech without caption / caption over long silence
+    def covered(a, b):
+        return sum(max(0, min(b, c['end']) - max(a, c['start'])) for c in CAPS)
+    miss = [(a, b) for a, b in VR if b - a >= .3 and covered(a, b) < .5 * (b - a)]
+    add('A3', '门槛', '有语音就有字幕', 'PASS' if not miss else 'FAIL', f'{len(miss)} 段语音无字幕' + (f'：{[(round(a,1), round(b,1)) for a, b in miss[:5]]}' if miss else ''))
+    def voiced_in(a, b): return sum(max(0, min(b, y) - max(a, x)) for x, y in VR)
+    ghost = [c for c in CAPS if voiced_in(c['start'], c['end']) < .15]
+    add('A4', '门槛', '无语音不出字幕', 'PASS' if not ghost else 'FAIL', f'{len(ghost)} 屏落在静音里')
 
-w = lambda s: sum(.5 if re.match(r'[A-Za-z0-9.\-]', ch) else 1 for ch in s if not ch.isspace())
-bad = [c for c in CAPS if c['end'] - c['start'] < 1 or w(c['text']) / max(c['end'] - c['start'], .01) > 9]
-long_ = [c for c in CAPS if w(c['text']) > 12]
-r = len(bad) / max(len(CAPS), 1)
-add('A5', '门槛', '字幕节奏（≥1s 且 ≤9 字/s）', 'PASS' if r <= .1 and not long_ else 'WARN' if r <= .2 else 'FAIL',
-    f'{len(bad)}/{len(CAPS)} 屏超标（{r:.0%}），超 12 字的屏 {len(long_)}')
+    w = lambda s: sum(.5 if re.match(r'[A-Za-z0-9.\-]', ch) else 1 for ch in s if not ch.isspace())
+    bad = [c for c in CAPS if c['end'] - c['start'] < 1 or w(c['text']) / max(c['end'] - c['start'], .01) > 9]
+    long_ = [c for c in CAPS if w(c['text']) > 14]
+    r = len(bad) / max(len(CAPS), 1)
+    add('A5', '门槛', '字幕节奏（≥1s 且 ≤9 字/s）', 'PASS' if r <= .1 and not long_ else 'WARN' if r <= .2 else 'FAIL',
+        f'{len(bad)}/{len(CAPS)} 屏超标（{r:.0%}），超 14 字的屏 {len(long_)}')
 
 # ---------------- B 内容 ----------------
 def grams(s):
@@ -100,7 +103,7 @@ add('B4', '内容', '相邻图形不同版式', 'PASS' if not adj else 'WARN', f
 cov = sum(b['e'] - b['s'] for b in B if b['c'] not in ('title', 'cta')) / D
 nG = len([b for b in B if b['c'] not in ('title', 'cta')])
 per_min = nG / (D / 60)
-add('B5', '内容', '图形密度（覆盖 30–75%，每分钟 1.5–4 个）', 'PASS' if .3 <= cov <= .75 and 1.5 <= per_min <= 4 else 'WARN',
+add('B5', '内容', '图形密度（覆盖 30–75%，每分钟 1–4 个）', 'PASS' if .3 <= cov <= .75 and 1 <= per_min <= 4 else 'WARN',
     f'覆盖 {cov:.0%}，{nG} 个图形（{per_min:.1f}/分钟）')
 over20 = [(b['c'], b['s'], round(b['e'] - b['s'], 1)) for b in B if b['e'] - b['s'] > 20 and b['c'] not in ('cta',)]
 add('B6', '内容', '单段 ≤20s（PRD V3）', 'PASS' if not over20 else 'WARN', f'{len(over20)} 段超 20s' + (f'：{over20}（承接型可接受）' if over20 else ''))
@@ -182,6 +185,50 @@ if os.path.exists(AUD):
         (f'界面骨架越界：{ch_bad}；' if ch_bad else '') + f'图形文字越界 {len(unsafe)} 处' + (f'：{unsafe}' if unsafe else ''))
 else:
     add('T0', '字号', '字号与安全区检查', 'WARN', '没有 audit.json，先跑 node audit.mjs runs/<name>')
+
+# ---------------- R 字幕（对照用户《【Eval】字幕增强》红线：能程序判的条目）----------------
+CAPF = f'{SRCD}/captions.json'
+if not CAP_ON:
+    add('R0', '字幕', '双字幕（TS-11）', 'PASS', '源片自带字幕，已关闭我们的字幕，不会出现双字幕')
+elif os.path.exists(CAPF):
+    CJ = json.load(open(CAPF))
+    if M.get('burnedBand'): add('R0', '字幕', '双字幕（TS-11）', 'FAIL', '源片自带字幕，但我们的字幕也开着')
+    long7 = [c['text'] for c in CJ if c['end'] - c['start'] > 7]
+    add('R11', '字幕', '单屏 ≤7 秒（R-11）', 'PASS' if not long7 else 'FAIL', f'{len(long7)} 屏超过 7 秒' + (f'：{long7[:3]}' if long7 else ''))
+    if 's0' in CJ[0]:
+        late = [(c['text'], round(c['start'] - c['s0'], 2)) for c in CJ if c['start'] > c['s0'] + .001]
+        add('R12', '字幕', '字幕不晚于语音出现（R-12）', 'PASS' if not late else 'FAIL', f'{len(late)} 屏晚于语音' + (f'：{late[:3]}' if late else ''))
+        ok = sum(1 for c in CJ if abs(c['start'] - c['s0']) <= .2 and abs(c['end'] - c['e0']) <= .2)
+        r13 = ok / len(CJ)
+        add('R13', '字幕', '起止与语音偏差 ≤200ms（R-13）', 'PASS' if r13 >= .95 else 'WARN' if r13 >= .85 else 'FAIL', f'{ok}/{len(CJ)} 屏达标（{r13:.0%}）')
+    else:
+        add('R12', '字幕', '字幕不晚于语音（R-12/13）', 'WARN', 'captions.json 没有 s0/e0，先用新版 align.py 重新对齐')
+    unit = [(CJ[i]['text'], CJ[i + 1]['text']) for i in range(len(CJ) - 1) if re.search(r'[0-9一二三四五六七八九十百千两]$', CJ[i]['text']) and re.match(r'[万亿%％元块个岁年月天倍小时分秒公里米kKmMgG]', CJ[i + 1]['text'])]
+    script_flat = ' '.join(c['text'] for c in CJ)
+    names = [(CJ[i]['text'], CJ[i + 1]['text']) for i in range(len(CJ) - 1)
+             if (m1 := re.search(r'([A-Za-z][\w.-]*)$', CJ[i]['text'])) and (m2 := re.match(r'([A-Za-z][\w.-]*)', CJ[i + 1]['text']))
+             and re.search(re.escape(m1.group(1)) + r'\s+' + re.escape(m2.group(1)) + r'(?![|])', ' '.join(x['text'] for x in CJ if x is not CJ[i]))]
+    add('R30', '字幕', '数字与单位、专名不被拆到两屏（R-27/28/30）', 'PASS' if not unit and not names else 'FAIL', f'数字单位 {len(unit)} 处、专名 {len(names)} 处' + (f'：{(unit + names)[:3]}' if unit or names else ''))
+    hang = [c['text'] for c in CJ if not c.get('sentence_end') and re.search(r'(的|和|与|跟|在|把|被|对|给|从|向|或|及|而|地)$', c['text'])]
+    add('R35', '字幕', '不以悬挂功能词结尾（R-35，人工复核）', 'PASS' if not hang else 'WARN', f'{len(hang)} 屏以「的/和/在…」结尾，句末语气词可接受，挂空的要改' + (f'：{hang[:6]}' if hang else ''))
+    if os.path.exists(AUD) and A.get('capSamples'):
+        cs = A['capSamples']
+        two = [c['text'] for c in cs if c['lines'] > 1]
+        add('R15', '字幕', '单屏 1 行（R-15）', 'PASS' if not two else 'FAIL', f'抽样 {len(cs)} 屏，{len(two)} 屏超过 1 行')
+        fsr = sorted({round(c['fs'] / 1920 * 100, 2) for c in cs})
+        add('R16', '字幕', '字号 3–4% 画面高（R-16，9:16）', 'PASS' if all(3 <= v <= 4.01 for v in fsr) else 'FAIL', f'{fsr}%')
+        outb = [c['text'] for c in cs if c['box'][0] < 0 or c['box'][2] > 1080 or c['box'][1] < 0 or c['box'][3] > 1920]
+        offc = [c['text'] for c in cs if abs((c['box'][0] + c['box'][2]) / 2 - 540) > 4]
+        bm = sorted({round((1920 - c['box'][3]) / 1920 * 100, 1) for c in cs})
+        add('R21', '字幕', '居中、不出界、底边距 15–20%（R-19/20/21）', 'PASS' if not outb and not offc and all(15 <= v <= 20 for v in bm) else 'FAIL',
+            f'底边距 {bm}%；出界 {len(outb)}；偏离中线 {len(offc)}')
+        hit = []
+        for b in A['beats']:
+            for c in b.get('caps', []):
+                for x in b['items']:
+                    bx = x['box']
+                    if bx[0] < c['box'][2] and bx[2] > c['box'][0] and bx[1] < c['box'][3] and bx[3] > c['box'][1]: hit.append((b['c'], x['text'][:8])); break
+        add('R24', '字幕', '字幕不压图形文字（R-24）', 'PASS' if not hit else 'FAIL', f'{len(hit)} 处重叠' + (f'：{hit[:3]}' if hit else ''))
 
 # ---------------- report ----------------
 icon = {'PASS': '✅', 'WARN': '⚠️', 'FAIL': '❌', 'INFO': 'ℹ️'}

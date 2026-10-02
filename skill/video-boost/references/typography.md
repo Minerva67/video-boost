@@ -36,5 +36,5 @@
 | YouTube Shorts | 110 | 420 | 140 | [Safe Zone Guide](https://kreatli.com/guides/safe-zone-guide) |
 
 - 三个海外平台都要发时，取交集：关键内容放在画面高度 12%–72% 之间。
-- **当前布局的已知问题**：进度标和 logo 在顶部 40–108px，按小红书的建议偏高；字幕底边在 1670（离底 250px），小红书和 Reels 够用，抖音会被挡。要换平台，先改布局再出片，见 `eval.py` 的 S1。
+- **当前布局（10-02 按小红书调整）**：进度条在 y=150，进度标和 logo 在 172–240；图形区从 y=250 开始；字幕胶囊底边约 y=1600（底边距 16.7%，符合用户字幕 Eval 的 R-21：9:16 为 15–20%）。普通让位时人缩到 58%，dense 时 50%，都贴底居中。发抖音时底部要留 484px，字幕还得再上移，见 `eval.py` 的 S1。
 - 检查：`node audit.mjs runs/<name> --platform xhs|douyin|reels|shorts`。

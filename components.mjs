@@ -384,6 +384,21 @@ tl.from('#${id}-ax', {opacity: 0, y: 14, duration: .35}, ${d.axis.at});
 (() => { const band = document.querySelector('#${id} .band'); const w = band ? band.clientWidth : 600; tl.to('#${id}-dot', {x: w * .88, duration: 1.4, ease: 'power2.inOut'}, ${d.axis.moveAt}); })();
 tl.from('#${id}-src', {opacity: 0, duration: .3}, ${d.axis.at + .3});`,
   }),
+  // ---------- ENU-02 × 案例矩阵（承接型）：表头 + 全部空格同时出现（先给总量）→ 按口播逐格填入 → 当前行点亮，结果列点亮 ----------
+  // d: { at, cols: ['谁', …], rows: [{ cells: [{ t, at }, …] }], litCol, foot?, footAt? }
+  cases: (id, d) => ({
+    html: `<div class="k-cases" style="--nc:${d.cols.length}"><div class="hr" id="${id}-hr">${d.cols.map((c) => `<span>${md(c)}</span>`).join('')}</div>
+  ${d.rows.map((r, i) => `<div class="row" id="${id}-r${i}">${r.cells.map((c, k) => `<div class="cell${k === d.litCol ? ' lit' : ''}" id="${id}-c${i}-${k}"><span class="t" id="${id}-t${i}-${k}">${md(c.t)}</span></div>`).join('')}</div>`).join('')}
+  ${d.foot ? `<div class="foot" id="${id}-f">${md(d.foot)}</div>` : ''}</div>`,
+    js: `tl.from('#${id}-hr', {opacity: 0, y: 16, duration: .4, ease: 'expo.out'}, ${d.at});
+tl.from('#${id} .cell', {opacity: 0, y: 14, duration: .35, stagger: .03, ease: 'expo.out'}, ${(d.at + .15).toFixed(2)});
+${d.rows.map((r, i) => `${r.cells.map((c, k) => `tl.from('#${id}-t${i}-${k}', {opacity: 0, y: 10, duration: .3, ease: 'expo.out'}, ${(c.at - .05).toFixed(2)});
+tl.to('#${id}-c${i}-${k}', {borderStyle: 'solid', borderColor: '${TH.ink}', duration: .15}, ${c.at.toFixed(2)});
+${k === d.litCol ? `tl.to('#${id}-c${i}-${k}', {backgroundColor: '${TH.mark}', duration: .25}, ${c.at.toFixed(2)});` : ''}`).join('\n')}
+${i ? `tl.to('#${id}-r${i - 1}', {opacity: .55, duration: .3}, ${(r.cells[0].at - .1).toFixed(2)});` : ''}`).join('\n')}
+${d.allAt ? `tl.to('#${id} .row', {opacity: 1, duration: .3}, ${d.allAt});` : ''}
+${d.foot ? rise(`#${id}-f`, d.footAt ?? d.at + .5, .35) : ''}`,
+  }),
   // ===================== dense companion panels (render in the lower part of a tall zone via beat.below) =====================
 
   // HR 关键词筛选：计数 0→N 随命中跳动 + 分段进度条（演出「HR 按关键词筛」这个动作）
@@ -491,4 +506,18 @@ tl.to('#${id}-rk', {motionPath: {path: '#${id}-traj', align: '#${id}-traj', auto
 ${rise(`#${id}-lo`, d.passAt + .6, .35)}
 ${knock(`#${id}-lo`, d.passAt + .9)}`,
   }),
+  // ---------- ENU-01 卡片堆叠：口播用序数词逐个引出 3–4 项；第 n 张升入并高亮 → 第 n−1 张上推缩小变暗 → 讲完全部同屏 ----------
+  // d: { at, title?, items: [{ k?, t, s?, at }] }   k = 角标（默认 01/02…），t = 一句话，s = 小字补充
+  stack: (id, d) => {
+    const n = d.items.length, H = 118, G = 14;
+    return {
+      html: `<div class="k-stack" id="${id}">${d.title ? `<div class="hd" id="${id}-hd">${md(d.title)}</div>` : ''}
+  <div class="deck" style="height:${n * (H + G)}px">${d.items.map((x, i) => `<div class="card" id="${id}-c${i}" style="top:${i * (H + G)}px;height:${H}px"><b>${esc(x.k || String(i + 1).padStart(2, '0'))}</b><span class="t">${md(x.t)}</span>${x.s ? `<span class="s">${md(x.s)}</span>` : ''}</div>`).join('')}</div></div>`,
+      js: `${d.title ? rise(`#${id}-hd`, d.at) : ''}
+${d.items.map((x, i) => `tl.from('#${id}-c${i}', {y: 60, opacity: 0, duration: .5, ease: 'expo.out'}, ${x.at.toFixed(2)});
+tl.to('#${id}-c${i}', {backgroundColor: '${TH.mark}', borderColor: '${TH.ink}', duration: .2}, ${x.at.toFixed(2)});
+${i ? `tl.to('#${id}-c${i - 1}', {backgroundColor: '${TH.card}', borderColor: '${TH.line}', opacity: .7, duration: .3}, ${x.at.toFixed(2)});` : ''}`).join('\n')}
+${d.allAt ? `tl.to('#${id} .card', {opacity: 1, duration: .3}, ${d.allAt});` : ''}`,
+    };
+  },
 };

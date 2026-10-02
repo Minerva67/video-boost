@@ -59,7 +59,7 @@ const snap = (x) => { for (const win of [.7, 1.4]) { let best = null; for (const
   let cb = null; for (const c of capsRaw) if (Math.abs(c.start - x) <= .7 && (cb == null || Math.abs(c.start - x) < Math.abs(cb - x))) cb = c.start;
   if (cb != null) return +cb.toFixed(2);
   console.warn('snap: no pause or phrase break near', x); return +x.toFixed(2); };
-const L = { full: { s: 1, x: 0, y: 0 }, split: { s: .62, x: 205, y: 730 }, dense: { s: .5, x: 270, y: 960 }, push: { s: 1.06, x: -32, y: -48 }, punch: { s: 1.14, x: -76, y: -112 } };
+const L = { full: { s: 1, x: 0, y: 0 }, split: { s: .58, x: 227, y: 806 }, dense: { s: .5, x: 270, y: 960 }, push: { s: 1.06, x: -32, y: -48 }, punch: { s: 1.14, x: -76, y: -112 } };
 // snapBefore(x): for 'split' moves, x = when the graphic enters. The move is centred on the returned time and starts .4s
 // earlier, so any pause/phrase break ≤ x + .4 keeps "person moves aside before the graphic enters". Prefer the latest
 // real pause in [x-1.4, x+.4], else the latest phrase break (caption start) there, else x.
@@ -97,8 +97,8 @@ B.forEach((b, i) => {
   let inner;
   if (b.c === 'title' || b.c === 'cta') inner = comp.html;
   else if (b.below) {
-    const mainH = b.below.mainH ?? 460, gap = 24, sub = C[b.below.c](id + 'b', b.below.d);
-    inner = `<div class="zone tall split2"><div class="z-main" style="--zh:${mainH}px">${comp.html}</div><div class="z-below" style="top:${mainH + gap}px;--zh:${760 - mainH - gap}px">${sub.html}</div></div>`;
+    const TALL = 690, mainH = Math.round((b.below.mainH ?? 460) * TALL / 760), gap = 20, sub = C[b.below.c](id + 'b', b.below.d);   // mainH authored against the old 760 zone
+    inner = `<div class="zone tall split2"><div class="z-main" style="--zh:${mainH}px">${comp.html}</div><div class="z-below" style="top:${mainH + gap}px;--zh:${TALL - mainH - gap}px">${sub.html}</div></div>`;
     js += sub.js + '\n';
   } else inner = `<div class="zone${b.dense ? ' tall' : ''}">${comp.html}</div>`;
   html += `<div id="${id}" class="clip beat" data-start="${b.s.toFixed(2)}" data-duration="${(b.e - b.s).toFixed(2)}" data-track-index="${4 + (i % 2)}"><div class="in" id="${id}-in">${inner}</div></div>\n`;
@@ -134,8 +134,13 @@ ${JSON.stringify(CAM)}.forEach(k => {
 });\n`;
 
 // captions: HyperFrames caption-pill-karaoke (Knock palette)
+// captions: if the source already has burned-in captions (prep → source_meta.json), ours are OFF by default
+// (user decision 2026-10-02). beats.mjs may force it with CAPTIONS: 'on' | 'off'.
+const META = fs.existsSync(path.join(SRC, 'source_meta.json')) ? JSON.parse(fs.readFileSync(path.join(SRC, 'source_meta.json'), 'utf8')) : {};
+const CAP_ON = (beatsMod.CAPTIONS || (META.burned ? 'off' : 'on')) === 'on';
+if (!CAP_ON) console.log('captions: OFF (source has burned-in captions' + (META.band ? ` at ${META.band.map((v) => Math.round(v * 100) + '%').join('–')}` : '') + ')');
 let capHtml = '';
-caps.forEach((c, i) => {
+(CAP_ON ? caps : []).forEach((c, i) => {
   const hl = new Set(); for (const h of c.hl || []) { const a = c.text.indexOf(h); if (a >= 0) for (let k = 0; k < h.length; k++) hl.add(a + k); }
   let n = 0, k = 0, sp = '';
   for (const tok of c.text.match(/[A-Za-z0-9.%]+| |./gu) || []) {
@@ -156,7 +161,7 @@ const page = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><me
   <div id="cam"><video id="a-roll" class="clip" src="source.mp4" muted playsinline data-start="0" data-duration="${D}" data-track-index="0"></video></div>
   <audio id="a-roll-audio" src="source.mp4" data-start="0" data-duration="${D}" data-track-index="2" data-volume="1"></audio>
 ${html}<div id="annot-holder" style="display:none">${annots}</div>${rail}  <div class="logo${TM.logoPill === false ? ' bare' : ''}"><img src="logo.svg" alt="Knock〃"/></div>
-  <div class="caps ${TM.caption.style}">
+  <div class="caps ${TM.caption.style}"${CAP_ON ? '' : ' style="display:none"'}>
 ${capHtml}  </div>
 </div>
 <script>
@@ -170,7 +175,7 @@ tl.seek(0);
 fs.writeFileSync(path.join(PUB, 'index.html'), page);
 // manifest for eval.py
 const strip = (h) => h.replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
-fs.writeFileSync(path.join(PUB, 'manifest.json'), JSON.stringify({ theme: THEME_NAME, src: path.relative(root, SRC), D, chapters: CH, camera: CAM, layouts: L,
+fs.writeFileSync(path.join(PUB, 'manifest.json'), JSON.stringify({ theme: THEME_NAME, src: path.relative(root, SRC), D, captionsOn: CAP_ON, burnedBand: META.band || null, chapters: CH, camera: CAM, layouts: L,
   beats: B.map((b, i) => ({ i, c: b.c, below: b.below?.c, s: +b.s.toFixed(2), e: +b.e.toFixed(2), text: strip(C[b.c]('m' + i, b.d).html + (b.below ? ' ' + C[b.below.c]('mb' + i, b.below.d).html : '')) })),
   captions: caps.map((c) => ({ text: c.text, start: c.start, end: c.end })) }, null, 1));
 console.log(path.basename(RUN) + ' built:', B.length, 'beats,', caps.length, 'captions,', CAM.length, 'camera keys');

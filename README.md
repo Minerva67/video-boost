@@ -24,12 +24,13 @@ python3 -m venv .venv && .venv/bin/pip install pywhispercpp
 
 ## 一支片子的流程
 ```bash
-./prep.sh <视频> <name>                         # 转 SDR、抽音频、转录、重切段、漏句检查
-# 校对 runs/<name>/script.txt（| = 字幕断点）
+./prep.sh <视频> <name>                         # 转 SDR、抽音频、转录、重切段、漏句检查、烧录字幕检测
+# 校对 runs/<name>/script.txt（| = 换屏，。= 句子边界；听不清的词用 retranscribe.py）
 .venv/bin/python align.py runs/<name> <时长> && .venv/bin/python fix_caps.py runs/<name> <时长>
 # 写 runs/<name>/beats.mjs（模板：runs/example/beats.mjs）
 node build.mjs runs/<name> [--theme=<name>]
-npx hyperframes render runs/<name>/public --sdr -o runs/<name>/output.mp4
+HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npx hyperframes render runs/<name>/public --sdr -o runs/<name>/output.mp4
+# 改分镜时先看单帧：npx hyperframes snapshot runs/<name>/public --at <秒>
 ./evaluate.sh runs/<name>                       # 最后一步：Eval（字号/安全区实测 + 自动检查），门槛不过不交付
 ```
 
@@ -41,12 +42,13 @@ npx hyperframes render runs/<name>/public --sdr -o runs/<name>/output.mp4
 | `brand/components.css` | 组件样式（只用主题变量） |
 | `brand/themes/<name>/theme.json` | 主题：颜色角色、字体、圆角/描边/阴影、logo、字幕风格（仓库只带 knock；私有品牌主题放本地，已 gitignore） |
 | `brand/icons/` | 真 logo（Lobe Icons MIT / Simple Icons CC0，见 SOURCES.txt），`fetch_icons.sh` 取新的 |
-| `prep.sh` · `check_asr.py` | 素材准备；检查 ASR 漏句和分段稿漏句 |
+| `prep.sh` · `check_asr.py` · `detect_burned_captions.py` | 素材准备；检查 ASR 漏句和分段稿漏句；检测源片是否自带烧录字幕（有则默认关闭我们的字幕） |
+| `retranscribe.py` | 听不清的词：原速、加术语、0.8 倍慢放三种重转 |
 | `align.py` · `fix_caps.py` | 字幕逐字对时；合并过短/过快的字幕屏（不跨句、不跨章节） |
 | `review.sh` | 渲染后按时间点抽帧拼图，逐张检查 |
 | `evaluate.sh` | 流程最后一步：先跑 `audit.mjs`，再跑 `eval.py` |
 | `audit.mjs` | 用无头 Chrome 打开成片页面，把时间线拨到每个图形，量出文字实际渲染的字号与位置 |
-| `eval.py` | Eval：门槛 + 内容/运镜/字号/安全区自动检查 + 人工评分表 → `runs/<name>/eval.md` |
+| `eval.py` | Eval：门槛 + 内容/运镜/字号/安全区/字幕自动检查 + 人工评分表 → `runs/<name>/eval.md` |
 | `skill/video-boost/` | Claude Code skill（改了 `~/.claude/skills/video-boost` 后跑 `./sync_skill.sh` 同步进来） |
 
 字体均为 OFL 授权；品牌 logo 仅作指代，归各自所有者。动效依赖：GSAP（含 DrawSVG / MorphSVG / MotionPath，GSAP Standard License，免费可商用）、rough.js（MIT）、HyperFrames（Apache-2.0）。
