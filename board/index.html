@@ -105,8 +105,7 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
   <h1>Video Boost <span>口播增强 · 流程画板</span></h1>
   <div class="meta">
     <span class="chip y">基线：剪辑师版本 <code>83f3325</code>（已在 GitHub）</span>
-    <span class="chip">待验证：+ 真 logo <code>db636d8</code>（分支 logo）</span>
-    <span class="chip">未采用：提速版（分支 experiments-speed）</span>
+    <span class="chip">未采用：提速版、为加 logo 而加 logo 的版本</span>
   </div>
   <p class="lede">一支单人口播视频进来，原片画面、声音、时长一律不动，只叠一层同步图形和运镜。整条流程分四个阶段，以 Eval 收尾。黄色标出剪辑师视角起作用的地方，橙色是门槛和返工点。</p>
   <div class="legend">
@@ -133,7 +132,6 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
         <div class="lane-h y"><span class="num">2</span><h3>理解与设计</h3></div>
         <div class="step"><div class="t">通读全文，理论证结构</div><div class="d">论点一句话；结构类型（路径 / 框架 / 并列 / 问题→解法 / 对比）；每段的角色和结论</div><div class="tool"><code>structure.md</code></div></div>
         <div class="step"><div class="t">小标题 = 角色词 · 结论</div><div class="d">≤12 字，连起来读就是论证本身；驱动顶部进度标</div></div>
-        <div class="step y"><div class="t">列出口播里的品牌</div><div class="d">对照品牌词表，给出要先取的 logo</div><div class="tool"><code>brands.py</code><code>fetch_icons.sh</code></div></div>
         <div class="step y"><div class="t">剪辑台本</div><div class="d">每段先问：做什么用？剪辑师会切到什么画面？素材到哪一级？见下方「剪辑师视角」</div><div class="tool"><code>cut.md</code></div></div>
         <div class="step y"><div class="t">取真实素材、核对原文</div><div class="d">网页截图并定位原句；公开授权照片；口径要和口播一致</div><div class="tool"><code>grab.mjs</code><code>commons.py</code></div></div>
         <div class="step"><div class="t">写图形和运镜</div><div class="d">时间一律用 <code>t('原话')</code> 取，不手填秒数；运镜写进 CAM</div><div class="tool"><code>beats.mjs</code></div></div>
@@ -145,7 +143,7 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
         <div class="step"><div class="t">构建</div><div class="d">套主题皮肤、内联真 logo、手绘圈注（固定种子，每次一样）</div><div class="tool"><code>build.mjs</code><code>hyperframes lint</code></div></div>
         <div class="step"><div class="t">草稿渲染</div><div class="d">低画质出一版，约 1.5 分钟</div></div>
         <div class="step"><div class="t">关键帧拼图</div><div class="d">每段末尾一帧，示意界面 3–4 帧</div><div class="tool"><code>review.sh</code></div></div>
-        <div class="step y o"><div class="t">剪辑师审片（独立子 agent）</div><div class="d">只看拼图和台本，按 7 个问题逐段给「过 / 打回 + 理由」</div></div>
+        <div class="step y o"><div class="t">剪辑师审片（独立子 agent）</div><div class="d">只看拼图和台本，按 6 个问题逐段给「过 / 打回 + 理由」</div></div>
         <div class="loop">↻ 打回的改完再拼图复审，审过才往下走</div>
         <div class="step"><div class="t">正式渲染</div><div class="d">只渲染一次，后台跑</div><div class="tool"><code>output.mp4</code></div></div>
       </div>
@@ -180,7 +178,7 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
         <div class="k">视角 2 · 素材等级</div>
         <h3>剪辑师会切到什么画面？从高往低找</h3>
         <div class="ladder">
-          <div class="rung"><i>1</i><div><b>真实素材</b><div class="small">新闻 / 官网截图（划出那句话）、真实照片、产品真实界面、真品牌 logo</div></div></div>
+          <div class="rung"><i>1</i><div><b>真实素材</b><div class="small">新闻 / 官网截图（划出那句话）、真实照片、产品真实界面</div></div></div>
           <div class="rung"><i>2</i><div><b>演示</b><div class="small">把口播说的操作真的演一遍：指令 → 步骤 → 产出物</div></div></div>
           <div class="rung"><i>3</i><div><b>数据图</b><div class="small">数字有对比或变化才画</div></div></div>
           <div class="rung"><i>4</i><div><b>文字卡</b><div class="small">只给演不出来的抽象概念</div></div></div>
@@ -244,7 +242,6 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
             <li>一眼能看出该看哪里吗？</li>
           </ol>
           <ol class="qs" start="5" style="counter-reset:q 4">
-            <li>提到的品牌、产品有没有带真 logo？</li>
             <li>有没有业余感：装饰性的图、每句都有特效、字墙、挡脸、压字幕？</li>
             <li>全片节奏：哪里太久没变化，哪里太挤？</li>
           </ol>
@@ -314,7 +311,6 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
           <tr><td>E1</td><td>素材等级</td><td>文字卡不超过一半，且至少一个真实素材或演示</td><td>盲测片全是表格和文字卡</td></tr>
           <tr><td>E2</td><td>图形不静止</td><td>一个图形里超过 8 秒没有任何动作记提醒</td><td>单个画面停 5–6 秒最好读</td></tr>
           <tr><td>E3</td><td>全屏不冷场</td><td>人单独出镜、没图也没推近，超过 30 秒记提醒</td><td>人脸与画面约 20–40 秒交替</td></tr>
-          <tr><td>E4</td><td>品牌带真 logo</td><td>图形里出现品牌名却没带 logo 记提醒</td><td>你认可「加真 logo」那版（待验证分支）</td></tr>
 
           <tr class="grp"><td colspan="4">T / S 字号与安全区（无头浏览器实测）</td></tr>
           <tr><td>T1</td><td>字号都在阶梯上</td><td>只允许 22 / 28 / 36 / 54 / 96 / 140</td><td>「字整体偏大、层级乱」</td></tr>
@@ -374,7 +370,7 @@ td:first-child{font:700 13px/1.4 var(--en);white-space:nowrap}
     </ol>
     <div class="card" style="margin-top:16px">
       <div class="k">已否决，不再回头</div>
-      <p class="small">卡片把口播缩写一遍 · 示意界面用灰条占位 · dense 时放大字号 · 小标题按话题逐段起名 · 角落画中画 · Claude 风格皮肤 · Knock 三色大面积铺屏 · 每段必增强 · 用模糊带遮原片字幕 · 只按「内容形状」选组件（变成一堆表格和文字卡）· 为提速改创作环节（盲测 4、5）</p>
+      <p class="small">卡片把口播缩写一遍 · 示意界面用灰条占位 · dense 时放大字号 · 小标题按话题逐段起名 · 角落画中画 · Claude 风格皮肤 · Knock 三色大面积铺屏 · 每段必增强 · 用模糊带遮原片字幕 · 只按「内容形状」选组件（变成一堆表格和文字卡）· 为提速改创作环节（盲测 4、5）· 为了 logo 而 logo、画面和口播对不上（盲测 6）</p>
     </div>
   </section>
 
