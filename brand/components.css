@@ -459,3 +459,18 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .z-main .k-cv .chip { height: 58px; }
 .z-main .k-cv .sec { margin-top: 16px; }
 .z-main .k-cv .top { padding-bottom: 16px; }
+
+/* ---------- REAL-01 photo / page ---------- */
+.k-photo { position: absolute; left: 0; right: 0; top: 0; height: var(--zh, 540px); display: flex; flex-direction: column; gap: 14px; }
+.k-photo .lab { align-self: flex-start; height: 48px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 999px; background: var(--mark); color: var(--mark-ink); font: 700 var(--fs-small)/1 var(--cn); }
+.k-photo .frame { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; border-radius: var(--r); overflow: hidden; border: var(--stroke) solid var(--frame); background: var(--card); box-shadow: var(--shadow); }
+.k-photo .bar { flex: none; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: var(--stroke) solid var(--line); background: var(--paper); }
+.k-photo .bar i { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.k-photo .bar span { margin-left: 10px; font: 500 var(--fs-micro)/1 var(--mono); color: var(--ink70); white-space: nowrap; overflow: hidden; }
+.k-photo .vp { flex: 1; position: relative; overflow: hidden; }
+.k-photo .img { position: absolute; left: 0; top: 0; width: 100%; }
+.k-photo .img img { display: block; width: 100%; height: auto; }
+.k-photo .mk { position: absolute; display: block; transform-origin: 0 50%; }
+.k-photo .mk.hl { background: var(--mark); mix-blend-mode: multiply; opacity: .75; border-radius: 4px; }
+.k-photo .mk.box { outline: 5px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.k-photo .credit { flex: none; font: 500 var(--fs-micro)/1.3 var(--cn); color: var(--ink70); }

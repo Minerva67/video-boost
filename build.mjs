@@ -48,6 +48,8 @@ ${(TM.fonts || []).map((f) => `@font-face { font-family: '${f.family}'; src: url
   --mark: ${TM.mark}; --mark-ink: ${TM.markInk}; --accent: ${TM.accent}; --frame: ${TM.frame}; --stroke: ${TM.stroke}; --shadow: ${TM.shadow}; --r: ${TM.radius};
   --cn: ${TM.fontCn}; --en: ${TM.fontEn}; --mono: ${TM.fontMono}; }
 `);
+// real material (photos, page screenshots) fetched by grab.mjs / commons.py live in runs/<name>/assets
+if (fs.existsSync(path.join(SRC, 'assets'))) fs.cpSync(path.join(SRC, 'assets'), path.join(PUB, 'assets'), { recursive: true });
 if (!fs.existsSync(path.join(PUB, 'source.mp4'))) fs.linkSync(path.join(SRC, 'source.mp4'), path.join(PUB, 'source.mp4'));
 
 // ---------- beats (per video) ----------

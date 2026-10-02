@@ -12,7 +12,7 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 
 1. **只加不改**：原片画面、镜头顺序、时间轴、原声、时长全部不变。CTA 也是叠在最后几秒，不加长片子。
 2. **卡片不许复述口播**。每张图过一遍测试：「关掉声音和字幕，这张图多给了什么？」答案是「同样的字」就删。字幕已经在说话了，卡片再写一遍 = 三重重复（v4 被否的原因）。
-3. **能演出来就别写出来**：口播提到「用 X 工具做了 Y」，就把 X 的真实界面和 Y 的产出物演出来（Claude Code 会话逐字打指令→工具调用→结果表/报告），不要灰条占位（v5→v6 被点名要求）。
+3. **能演出来就别写出来，能拿到真东西就别演**：口播提到真实存在的新闻/报告/产品/地方，优先放真实截图或照片（`photo` 组件，划出那个数字）；口播提到「用 X 工具做了 Y」，就把 X 的真实界面和 Y 的产出物演出来（Claude Code 会话逐字打指令→工具调用→结果表/报告），不要灰条占位（v5→v6 被点名要求）。
 4. **示意 ≠ 编造**：允许示意界面（窗口角标「示意」），但不加原片没说的观点；**任何数字/来源必须真实检索**（WebSearch+WebFetch 核实页面原文；多家口径不同就写区间并都标出），示例标题类内容不带热度/点赞数字。
 5. **不挡脸、不挤**：人永远贴底居中——全屏 / 62%（普通图形）/ 50%（信息密的图形，用户 10-02 要求「信息量大就把人放小，多留地方做可视化」）。画中画（人缩到 30% 角落）被否。
 6. **皮肤 = 主题（theme）**，默认用户自己的 Knock〃 设计系统 B 线密度（`brand/themes/knock/`）；也有 私有主题（`brand/themes/<私有主题>/`，按品牌规范B 线）。换主题：`node build.mjs runs/<name> --theme=<name>`（输出到 `public-<theme>/`）。Knock 版细则：纸白打底、门黄只做小色块、敲击橙 ≤5%、1.5px 墨黑描边、无阴影；右上角横版 logo 常驻。Claude 风格皮肤被否（"设计系统还是用我的"），Knock 三色大面积铺屏也被否（"太鲜艳很累"）。
@@ -25,12 +25,14 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 # → 读 runs/<name>/segs_beam.json，校对写 runs/<name>/script.txt（| = 字幕断点）
 .venv/bin/python align.py runs/<name> <时长>       # 校对文本对齐回 ASR 字级时间 + VAD 校时 → transcript.json / captions.json / voiced.json
 .venv/bin/python fix_caps.py runs/<name> <时长>    # 自动合并 <1s 或 >9字/s 的字幕屏，重对齐（不跨章节/句子/停顿合并）
-# → 先写 runs/<name>/structure.md，再写 runs/<name>/beats.mjs（从 runs/example/beats.mjs 复制改）
+# → 先写 runs/<name>/structure.md（论证结构）→ cut.md（剪辑台本）→ 再写 beats.mjs（从 runs/example/beats.mjs 复制改）
+# 真实素材：node grab.mjs <网址> runs/<name>/assets/x.png --find "关键句"；python3 commons.py "<英文关键词>" runs/<name>/assets
 node build.mjs runs/<name>
 npx hyperframes lint runs/<name>/public            # 0 error 即可（caption 的 nested 警告是已知的）
 HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
   npx hyperframes render runs/<name>/public --sdr -q draft -o runs/<name>/draft.mp4   # 156s ≈ 100s
 ./review.sh runs/<name>/draft.mp4 <每段末尾的时间点…>   # 出联系表，逐张看
+# → 剪辑师审片：派独立子 agent，只给联系表 + cut.md，按 references/editor.md §5 逐段「过 / 打回」；打回的改完复审
 # 修完 → 去掉 -q draft 出正式版 output.mp4
 ./evaluate.sh runs/<name> [--theme <主题>] [--platform xhs]   # 最后一步：Eval（测字号/安全区 + 23 项自动检查）→ runs/<name>/eval.md
 # 门槛不过不交付；WARN 逐条判断能修就修、修完重跑；通过后 → 拷到 ~/Desktop/口播增强_<版本>_<主题>.mp4 → SendUserFile
@@ -67,20 +69,20 @@ HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google 
 ### 第零步：先理结构，再写小标题
 **通读全文**，写出 `runs/<name>/structure.md`：论点、结构类型（路径 / 框架 / 并列 / 问题→解法 / 对比）、每段的角色和结论。小标题 = 角色词 · 结论（≤12 字），连起来读应该就是论证本身。不要一段一段单独起名，那样写出来的只是话题标签（用户两次否掉）。细则和样例见 `references/rules.md` §4。
 
-### 第一步：全片论证 → 哪里值得图形
-通读校对稿，写出：核心论点 + 支撑点（通常是「第 N 点」）+ 每点里的例子。然后逐段问：
-- 这里**耳朵接不住**吗？（并列 ≥4 项、推理链、机制/趋势、陌生概念）→ 机制图 / 推导链 / 网格
-- 这里在**描述一个操作或产出物**吗？（「我会让 Claude Code 去…」「简历要改成…」「做一个作品集」）→ **示意界面**（最值钱的一类）
-- 这里只是观点/过渡/情绪/口头总结？→ **全屏，不加图**（可以配慢推）
+### 第一步：剪辑台本——先想「剪辑师在这里会切到什么画面」（最重要，见 `references/editor.md`）
+先写 `runs/<name>/cut.md`，再写 beats.mjs。逐段填：口播在讲什么 → 功能（解释 / 证明 / 重置注意力，都不是就不加图）→ 剪辑师会切到的画面 → 素材等级 → 为什么不用更高一级。
+- **素材等级从高往低找**：①真实素材（新闻/官网截图、真实照片、真实界面，用 `grab.mjs` / `commons.py` 取，`photo` 组件放）→ ②演示（`cc` / `folio` / `resume` / `checktable`）→ ③数据图 → ④文字卡。选 ③④ 必须写出具体理由。
+- 口播提到一个真实存在的东西（新闻、报告、公司、产品、地方、人群），先试 ①。
+- 一个画面只讲一件事，按口播顺序逐项进入；出现空格子、整张表一次性摆出来、大片留白，就要拆或者换素材。
+- 只是观点、过渡、情绪、口头总结 → 全屏，不加图（可以慢推）。全片 4–6 个图形就够。
 
-### 第二步：组件选型——按内容形状，不按题材
-先看这一段的**内容形状**（并列几项？一步推一步？此消彼长？在描述一个操作？），再到 `references/rules.md` §6 的「内容形状 → 组件」表里找。那张表给了每个组件在观点、故事、教程、数据四类题材里的用法。组件写法见 `references/components.md`。
-
+### 第二步：组件选型
+素材等级定了，再挑组件。第 ③④ 级按内容形状查 `references/rules.md` §6 的表；组件写法见 `references/components.md`。
 - 全片有「N 点」结构时，进度标由 build 根据 CH + TRACK 自动生成。
-- 口播在描述一个操作或产出物时，优先用示意界面（`cc` / `folio` / `resume` / `checktable`）演出来。它们不局限于 AI 工具：`cc` 能演任何「指令 → 步骤 → 产出」的软件操作。
+- `cc` 能演任何「指令 → 步骤 → 产出」的软件操作，不局限于 AI 工具。
 - 口播出现「留言 / 关注 / 私信」时，用 `cta`。
 - 库里没有合适的组件：按 `components.md` 末尾的「新组件清单」新写一个。
-- 想用口播外的真实数据，先看 `rules.md` §7 的边界。
+- 用口播外的真实数据，先看 `rules.md` §7 的边界。
 
 HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-comment-card / claude-exchange / chatgpt-exchange / code-typing 等现成块，但自带平台配色和假账号/假评论/假点赞——**只借动作，换 Knock 皮，不用假社交证明**。新组件写进 `components.mjs` + `brand/components.css`，入场顺序遵循 `references/rules.md` §2；写法清单见 `references/components.md` 末尾的「新组件清单」。
 
@@ -137,4 +139,4 @@ HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-co
 - 删除 review 帧别用 `rm` 通配（会被安全检查拦）；直接覆盖写同名文件。
 
 ## 版本史（口味演进，别回头）
-v1 Knock 三色铺屏 + 画中画 → 否（太艳、挡脸）｜v3 Claude 皮 → 否（用我的设计系统）｜v4 PRD 每段必增强 → 否（"你是把他说的话又可视化了"）｜v5 只留进度/机制图/示意 mock ✓｜v6 示意改成真实界面+真实数据 ✓｜v7 补作品集/简历示意 + 运镜规则 ✓（"这一版很好了"）｜10-01 skill 首跑 ai-value + 主题化（Knock/私有主题）+ Eval v1
+v1 Knock 三色铺屏 + 画中画 → 否（太艳、挡脸）｜v3 Claude 皮 → 否（用我的设计系统）｜v4 PRD 每段必增强 → 否（"你是把他说的话又可视化了"）｜v5 只留进度/机制图/示意 mock ✓｜v6 示意改成真实界面+真实数据 ✓｜v7 补作品集/简历示意 + 运镜规则 ✓（"这一版很好了"）｜10-01 skill 首跑 ai-value + 主题化（Knock/私有主题）+ Eval v1｜10-02 泛化成「内容形状 → 组件」后盲测片变成一堆表格文字卡 → 否（「可视化没有之前好了」）→ 加剪辑师视角：剪辑台本 + 素材等级 + 真实素材组件 + 审片

@@ -96,6 +96,29 @@
       { type: 'done', t: '已保存 market-report.md', at: t('…原话…') }] } }
 ```
 
+## `photo`（真实素材：新闻/官网截图、公开授权照片）——素材等级 ①，优先考虑
+```js
+{ c: 'photo', s, e, d: {
+  label: '参与人数 2518 万', at: t('…原话…'),
+  src: 'assets/news.png', w: 1170, h: 7200,          // grab.mjs / commons.json 给出的像素尺寸
+  url: 'news.example.com',                               // 有 url 就画浏览器地址栏（网页截图用；照片不写）
+  marks: [{ x: 324, y: 2852, w: 254, h: 75, at: t('…原话…') }],   // grab.mjs --find 的输出；kind 默认 'hl' 荧光笔，'box' 橙框
+  credit: '来源：某媒体 2025-04-16《报告标题》',
+  dur: 7,            // 慢滚/慢推时长；默认从第一个 mark 上方滚到 mark 居中
+  // view: [起点中心y, 终点中心y]（图片像素，手动指定滚动）；push: 1.04；focus: '50% 30%'（照片慢推的中心）
+} }
+```
+- 取素材：`node grab.mjs <网址> runs/<name>/assets/x.png --find "页面上的原句"`（手机视口，自动去浮动广告和吸顶栏）；照片 `python3 commons.py "<英文关键词>" runs/<name>/assets`，看图后挑一张，credit 抄 `commons.json`。
+- 截图前读原文核对；`--find` 找不到（`missing`）说明页面上没有这句话，不要硬画框。
+- 照片别写 url；一张照片最多 1 个 mark。网页截图的文字要能读：手机视口截出来的正文在 split 布局下约 28–36px，够用；桌面版（`--desktop`）字太小，只用来展示页面全貌。
+
+## 常用组件的数据格式（盲测时找不到的）
+- `stat` {label, labelAt, num, numAt, source, sourceAt}：num 是字符串（`'2519 万'` 这种）。只在有对比或变化时用；单个数字能截到原文页面，就用 `photo`。
+- `cases` {at, cols: ['谁', …], rows: [{ cells: [{ t, at }, …] }], litCol?, foot?, footAt?}：表头先出，格子按各自 at 逐个出现。每行是一个案例，超过 3 行就拆成两个 beat。
+- `stack` {at, title?, items: [{ k?, t, s?, at }]}：口播用「第一、第二…」逐个引出 3–4 项时用；k 是角标（默认 01/02）。
+- `grid` {title?, sub?, subAt?, cols: 2|3, items: [{ t, at }], allAt?}：格子按 at 逐个出现并打勾。
+- 时间函数：`t('…原话…')` 取这几个字第一次出现的起点；同一句话出现多次时用 `t('原话', 某个秒数)`，取这个时间之后的第一次。`snap(x)` 吸到最近的停顿；`snapBefore(x)` 只往前找停顿（让位用）。
+
 ## 进度 + 运镜（CH / TRACK / CAM）
 
 ```js

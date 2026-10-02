@@ -188,14 +188,13 @@ ${st.s ? rise(`#${id}-s${i}`, st.sAt ?? st.at + .4, .35) : ''}`).join('\n')}
 ${knock(`#${id}-n${d.steps.length - 1} .t`, d.steps[d.steps.length - 1].at + .5)}`,
   }),
 
-  // ---------- ENU-02 网格清单 · 带勾选：全部空框同时出现（先给总量）→ 按口播逐格填充并点亮 ----------
+  // ---------- ENU-02 网格清单 · 带勾选：按口播逐格出现并点亮（不先摆空框） ----------
   grid: (id, d) => ({
     html: `<div class="k-grid">${d.title ? `<div class="hd" id="${id}-hd">${md(d.title)}</div>` : ''}${d.sub ? `<div class="sub" id="${id}-sub">${md(d.sub)}</div>` : ''}
   <div class="cells c${d.cols || 3}">${d.items.map((x, i) => `<div class="cell" id="${id}-c${i}"><i class="ck" id="${id}-k${i}"></i><span class="t" id="${id}-t${i}">${md(x.t)}</span></div>`).join('')}</div></div>`,
     js: `${d.title ? rise(`#${id}-hd`, d.at) : ''}
 ${d.sub ? rise(`#${id}-sub`, d.subAt) : ''}
-tl.from('#${id} .cell', {opacity: 0, y: 20, duration: .4, ease: 'expo.out'}, ${d.cellsAt.toFixed(2)});
-${d.items.map((x, i) => `tl.from('#${id}-t${i}', {opacity: 0, y: 12, duration: .3, ease: 'expo.out'}, ${(x.at - .05).toFixed(2)});
+${d.items.map((x, i) => `tl.from('#${id}-c${i}', {opacity: 0, y: 16, duration: .35, ease: 'expo.out'}, ${(x.at - .1).toFixed(2)});
 tl.to('#${id}-c${i}', {backgroundColor: '${TH.mark}', borderColor: '${TH.ink}', duration: .2}, ${x.at.toFixed(2)});
 tl.from('#${id}-k${i}', {scale: 0, duration: .3, ease: 'back.out(2.4)'}, ${(x.at + .1).toFixed(2)});
 ${i ? `tl.to('#${id}-c${i - 1}', {backgroundColor: '${TH.card}', duration: .2}, ${x.at.toFixed(2)});` : ''}`).join('\n')}
@@ -384,15 +383,14 @@ tl.from('#${id}-ax', {opacity: 0, y: 14, duration: .35}, ${d.axis.at});
 (() => { const band = document.querySelector('#${id} .band'); const w = band ? band.clientWidth : 600; tl.to('#${id}-dot', {x: w * .88, duration: 1.4, ease: 'power2.inOut'}, ${d.axis.moveAt}); })();
 tl.from('#${id}-src', {opacity: 0, duration: .3}, ${d.axis.at + .3});`,
   }),
-  // ---------- ENU-02 × 案例矩阵（承接型）：表头 + 全部空格同时出现（先给总量）→ 按口播逐格填入 → 当前行点亮，结果列点亮 ----------
+  // ---------- ENU-02 × 案例矩阵（承接型）：表头 → 按口播逐格出现（不先摆空格子，用户嫌空框难看） → 当前行点亮，结果列点亮 ----------
   // d: { at, cols: ['谁', …], rows: [{ cells: [{ t, at }, …] }], litCol, foot?, footAt? }
   cases: (id, d) => ({
     html: `<div class="k-cases" style="--nc:${d.cols.length}"><div class="hr" id="${id}-hr">${d.cols.map((c) => `<span>${md(c)}</span>`).join('')}</div>
   ${d.rows.map((r, i) => `<div class="row" id="${id}-r${i}">${r.cells.map((c, k) => `<div class="cell${k === d.litCol ? ' lit' : ''}" id="${id}-c${i}-${k}"><span class="t" id="${id}-t${i}-${k}">${md(c.t)}</span></div>`).join('')}</div>`).join('')}
   ${d.foot ? `<div class="foot" id="${id}-f">${md(d.foot)}</div>` : ''}</div>`,
     js: `tl.from('#${id}-hr', {opacity: 0, y: 16, duration: .4, ease: 'expo.out'}, ${d.at});
-tl.from('#${id} .cell', {opacity: 0, y: 14, duration: .35, stagger: .03, ease: 'expo.out'}, ${(d.at + .15).toFixed(2)});
-${d.rows.map((r, i) => `${r.cells.map((c, k) => `tl.from('#${id}-t${i}-${k}', {opacity: 0, y: 10, duration: .3, ease: 'expo.out'}, ${(c.at - .05).toFixed(2)});
+${d.rows.map((r, i) => `${r.cells.map((c, k) => `tl.from('#${id}-c${i}-${k}', {opacity: 0, y: 14, duration: .35, ease: 'expo.out'}, ${(c.at - .1).toFixed(2)});
 tl.to('#${id}-c${i}-${k}', {borderStyle: 'solid', borderColor: '${TH.ink}', duration: .15}, ${c.at.toFixed(2)});
 ${k === d.litCol ? `tl.to('#${id}-c${i}-${k}', {backgroundColor: '${TH.mark}', duration: .25}, ${c.at.toFixed(2)});` : ''}`).join('\n')}
 ${i ? `tl.to('#${id}-r${i - 1}', {opacity: .55, duration: .3}, ${(r.cells[0].at - .1).toFixed(2)});` : ''}`).join('\n')}
@@ -518,6 +516,28 @@ ${d.items.map((x, i) => `tl.from('#${id}-c${i}', {y: 60, opacity: 0, duration: .
 tl.to('#${id}-c${i}', {backgroundColor: '${TH.mark}', borderColor: '${TH.ink}', duration: .2}, ${x.at.toFixed(2)});
 ${i ? `tl.to('#${id}-c${i - 1}', {backgroundColor: '${TH.card}', borderColor: '${TH.line}', opacity: .7, duration: .3}, ${x.at.toFixed(2)});` : ''}`).join('\n')}
 ${d.allAt ? `tl.to('#${id} .card', {opacity: 1, duration: .3}, ${d.allAt});` : ''}`,
+    };
+  },
+
+  // ---------- REAL-01 真实素材（照片 / 网页截图 / 新闻页）：画框入场 → 慢推或滚动 → 荧光笔划重点 → 出处 ----------
+  // d: { src:'assets/x.png', w, h (图片原始像素), label?, url?(有就画浏览器地址栏), credit, at, dur?, view?:[起点中心y, 终点中心y]（图片像素；默认从第一个 mark 上方 30% 视窗处滚到 mark 居中）, push?, focus?, marks:[{x,y,w,h,at,kind:'hl'|'box'}] }
+  photo: (id, d) => {
+    const pct = (v, t) => (v / t * 100).toFixed(2) + '%';
+    const marks = (d.marks || []).map((m, k) => `<b class="mk ${m.kind || 'hl'}" id="${id}-m${k}" style="left:${pct(m.x, d.w)};top:${pct(m.y, d.h)};width:${pct(m.w, d.w)};height:${pct(m.h, d.h)}"></b>`).join('');
+    const bar = d.url ? `<div class="bar"><i></i><i></i><i></i><span>${esc(d.url)}</span></div>` : '';
+    const m0 = (d.marks || [])[0], c1 = d.view ? d.view[1] : m0 ? m0.y + m0.h / 2 : 0, c0 = d.view ? d.view[0] : m0 ? c1 - 300 : 0;
+    const push = d.push ?? 1.04, dur = d.dur ?? 6;
+    // view centre (image px) → translateY in rendered px, clamped so the image always covers the viewport
+    const ty = (c) => `(() => { const vp = document.querySelector('#${id}-f .vp'), k = vp.clientWidth / ${d.w}, H = ${d.h} * k; return -Math.max(0, Math.min(H - vp.clientHeight, ${c} * k - vp.clientHeight / 2)); })()`;
+    return {
+      html: `<div class="k-photo">${d.label ? `<div class="lab" id="${id}-l">${md(d.label)}</div>` : ''}
+  <div class="frame${d.url ? ' web' : ''}" id="${id}-f">${bar}<div class="vp"><div class="img" id="${id}-i" style="transform-origin:${d.focus || '50% 0%'}"><img src="${esc(d.src)}" alt=""/>${marks}</div></div></div>
+  ${d.credit ? `<div class="credit" id="${id}-c">${md(d.credit)}</div>` : ''}</div>`,
+      js: `${d.label ? rise(`#${id}-l`, d.at) : ''}
+tl.from('#${id}-f', {y: 60, opacity: 0, duration: .55, ease: 'expo.out'}, ${d.at + .1});
+tl.fromTo('#${id}-i', {y: ${ty(c0)}, scale: 1}, {y: ${ty(c1)}, scale: ${push}, duration: ${dur}, ease: 'sine.inOut'}, ${d.at + .2});
+${(d.marks || []).map((m, k) => `tl.from('#${id}-m${k}', {${m.kind === 'box' ? 'opacity: 0, scale: 1.15' : 'scaleX: 0'}, duration: .45, ease: 'power3.out'}, ${m.at});`).join('\n')}
+${d.credit ? rise(`#${id}-c`, d.at + .5, .4) : ''}`,
     };
   },
 };

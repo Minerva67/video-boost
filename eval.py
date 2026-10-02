@@ -233,6 +233,36 @@ elif os.path.exists(CAPF):
         add('R24', '字幕', '字幕不压图形文字（R-24）', 'PASS' if not hit else 'FAIL', f'{len(hit)} 处重叠' + (f'：{hit[:3]}' if hit else ''))
 
 # ---------------- report ----------------
+# ---------- E 剪辑（references/editor.md）----------
+LV = {'photo': 1, 'cc': 2, 'folio': 2, 'resume': 2, 'checktable': 2, 'escape': 2,
+      'stat': 3, 'trend': 3, 'share': 3, 'gauge': 3, 'ctxline': 3, 'occupied': 3, 'kwmeter': 3, 'rangebar': 3, 'sharebar': 3, 'lines': 3, 'ladder': 3}
+G = [b for b in B if b['c'] not in ('title', 'cta')]
+lv = [LV.get(b['c'], 4) for b in G]
+txt = sum(1 for x in lv if x == 4); hi = sum(1 for x in lv if x <= 2)
+dist = '，'.join(f'{n}{lv.count(k)}' for k, n in ((1, '真实素材'), (2, '演示'), (3, '数据图'), (4, '文字卡')))
+add('E1', '剪辑', '素材等级：文字卡 ≤ 一半，且至少一个真实素材或演示', 'PASS' if G and txt <= len(G) / 2 and hi >= 1 else 'WARN', dist + '（选文字卡要在 cut.md 写理由）')
+# E2: inside a graphic, longest stretch with nothing moving (no tween running) — parsed from the built timeline
+HTML = open(f'{run}/{pub}/index.html', encoding='utf8').read()
+TW = re.findall(r"tl\.(?:from|to|fromTo|set)\('#(?:annot-)?(b\d+)[^']*',\s*(\{[^;]*?\}),\s*([0-9.]+)\);", HTML)
+still = []
+for b in G:
+    bid = f"b{b['i']}"
+    iv = sorted((float(t0), float(t0) + float((re.findall(r'duration:\s*([0-9.]+)', o) or [0])[-1])) for x, o, t0 in TW if x == bid)
+    iv = [(a, z) for a, z in iv if a < b['e'] - .35]          # drop the exit tween
+    cur, worst = b['s'], (0, b['s'])
+    for a, z in iv:
+        if a - cur > worst[0]: worst = (a - cur, cur)
+        cur = max(cur, z)
+    if b['e'] - .35 - cur > worst[0]: worst = (b['e'] - .35 - cur, cur)
+    if worst[0] > 8: still.append((b['c'], round(worst[1], 1), round(worst[0], 1)))
+add('E2', '剪辑', '图形里同一画面状态 ≤8s（要有新元素、滚动或划重点）', 'PASS' if not still else 'WARN', f'{len(still)} 处静止过久' + (f'（组件, 起点, 秒）：{still}' if still else ''))
+# E3: person alone on screen with no camera move and no graphic for >30s
+ev = sorted({0.0, D} | {b['s'] for b in G} | {b['e'] for b in G} | {k['t'] for k in CAM} | {k['t'] + (k.get('d') or 0) for k in CAM})
+def on_graphic(t): return any(b['s'] <= t < b['e'] for b in G)
+def moving(t): return any(k.get('d') and k['t'] <= t < k['t'] + k['d'] for k in CAM)
+long_ = [(round(a, 1), round(z - a, 1)) for a, z in zip(ev, ev[1:]) if z - a > 30 and not on_graphic((a + z) / 2) and not moving((a + z) / 2)]
+add('E3', '剪辑', '全屏段 ≤30s 无变化（没有图形也没有推近）', 'PASS' if not long_ else 'WARN', f'{len(long_)} 段' + (f'（起点, 秒）：{long_}' if long_ else ''))
+
 icon = {'PASS': '✅', 'WARN': '⚠️', 'FAIL': '❌', 'INFO': 'ℹ️'}
 gate_fail = any(st == 'FAIL' and i.startswith('A') for i, _, _, st, _ in R)
 nP = sum(x[3] == 'PASS' for x in R)
@@ -248,6 +278,7 @@ lines.append('''
 | # | 维度 | 分 | 依据（写到秒） |
 |---|---|---|---|
 | H1 | 静音测试：关掉声音和字幕，每张图多给了什么 |  |  |
+| H7 | 剪辑感：像剪辑师切的画面，而不是文字卡（真实素材 / 演示优先，一屏一件事，有焦点） |  |  |
 | H2 | 演示力：提到的操作/产出物被真实演出来 |  |  |
 | H3 | 事实诚实：示意不越界、数字来源可点开核对 |  |  |
 | H4 | 品牌一致：只用主题色板/字体/圆角，强调色一屏一处 |  |  |
