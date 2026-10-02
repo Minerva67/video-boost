@@ -88,6 +88,15 @@ HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google 
 
 HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-comment-card / claude-exchange / chatgpt-exchange / code-typing 等现成块，但自带平台配色和假账号/假评论/假点赞——**只借动作，换 Knock 皮，不用假社交证明**。新组件写进 `components.mjs` + `brand/components.css`，入场顺序遵循用户《可视化选型规范 · 30 模板》（（本地私有文档））。
 
+### 字号（不按感觉定）
+所有图形文字只用 6 档字号：hero 140 / display 96 / title 54 / body 36 / small 28 / micro 22，字幕 76 是画面里最大的阅读文字。一个图形最多 3 档；dense 不放大字号。规范、业界依据和平台安全区见 `references/typography.md`，由 Eval 的 T1–T5、S1 实测检查。
+
+### 动效素材库（只用能挂到 GSAP 时间线上、能逐帧对齐的）
+- **GSAP 全套插件**（2025 年起免费，可商用；已在 node_modules 里，build 自动加载）：`DrawSVG` 线条描画，`MorphSVG` 形状变形（比如「补丁」碎裂），`MotionPath` 沿路径运动（比如逃逸轨道的 `escape` 组件）。
+- **rough.js**（MIT）：手绘圈注。beat 上写 `annot: [{ sel, kind: 'circle'|'underline'|'box'|'strike', at }]`；路径用固定种子在 Node 里生成，每次渲染都一样；只给结论用，每个图形 ≤2 处。
+- **HyperFrames 官方组件目录**（Apache-2.0）：只借动作，换成本主题的皮肤。
+- 可以用但有限制：Lottie 免费动画可商用，但不能再分发原文件，只能留在本地，不进公开仓库。不用：纯 CSS 动画库（不能逐帧对齐）。
+
 ### 品牌 logo / 图标（真实的，不手画）
 图形里一出现产品/公司名，就在名字前加真 logo：文本里写 `:openai: ChatGPT`，`md()` 会内联 `brand/icons/openai.svg`。
 - 取图：`./fetch_icons.sh openai gemini google claudecode codex deepmind …`（Lobe Icons，MIT；`si:xiaohongshu` 走 Simple Icons，CC0）；来源记在 `brand/icons/SOURCES.txt`。
@@ -111,7 +120,7 @@ HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-co
 **让位（split）用 `snapBefore()`**：只往前找停顿，保证人先开始让位、图形后入场（build 会对违反的图形报警，Eval C6 检查）。其余移动用 `snap()` 吸到说话停顿（voiced.json 的间隙；±0.7s 找不到就放宽到 ±1.4s；语速快到完全没停顿时退到最近的字幕断点），镜头不在词中间动；split 的落位要早于图形入场。
 
 ## Eval（交付前必跑）
-`python3 eval.py runs/<name> [--public public-<theme>]` → `eval*.md`：门槛 A1–A5（不过不交付）+ 自动 B1–B6/C1–C5 + 人工 H1–H6 评分表。标准、阈值、出处、基线分见 `references/eval.md`。交付时报：门槛是否通过、自动分、主要 WARN 及是否属于可接受的判断项。
+`node audit.mjs runs/<name>` 然后 `python3 eval.py runs/<name> [--public public-<theme>]` → `eval*.md`：门槛 A1–A5（不过不交付）+ 自动 B1–B6/C1–C5 + 人工 H1–H6 评分表。标准、阈值、出处、基线分见 `references/eval.md`。交付时报：门槛是否通过、自动分、主要 WARN 及是否属于可接受的判断项。
 
 ## 交付前自检（看 review 联系表，每段末尾一帧 + 每个示意界面 3–4 帧）
 - 有没有卡片在复述字幕？有就删。

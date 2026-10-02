@@ -3,7 +3,19 @@
 // Render: npx hyperframes render runs/<name>/public --sdr -o runs/<name>/output.mp4
 import fs from 'node:fs';
 import path from 'node:path';
-import { C, esc, setTheme } from './components.mjs';
+import { C, esc, setTheme, TH } from './components.mjs';
+import rough from 'roughjs/bundled/rough.esm.js';
+// hand-drawn annotation paths (rough.js, seeded → identical every render), drawn in a 1000×1000 box and stretched over the target
+const RG = rough.generator();
+const roughPath = (kind, seed) => {
+  const o = { roughness: 1.5, bowing: 1.4, seed, strokeWidth: 1 };
+  const shape = kind === 'circle' ? RG.ellipse(500, 500, 1060, 1000, o)
+    : kind === 'box' ? RG.rectangle(10, 10, 980, 980, o)
+    : kind === 'underline' ? RG.line(0, 960, 1000, 940, o)
+    : kind === 'strike' ? RG.line(0, 520, 1000, 480, o)
+    : RG.line(0, 500, 1000, 500, o);
+  return RG.toPaths(shape).map((x) => x.d).join(' ');
+};
 
 const root = path.dirname(new URL(import.meta.url).pathname);
 import { execFileSync } from 'node:child_process';
@@ -26,6 +38,8 @@ const TM = JSON.parse(fs.readFileSync(path.join(TDIR, 'theme.json'), 'utf8'));
 setTheme(TM);
 fs.copyFileSync(path.join(root, 'brand', 'components.css'), path.join(PUB, 'components.css'));
 fs.copyFileSync(path.join(root, 'node_modules/gsap/dist/gsap.min.js'), path.join(PUB, 'gsap.min.js'));
+const PLUGINS = ['DrawSVGPlugin', 'MorphSVGPlugin', 'MotionPathPlugin'];   // GSAP bonus plugins (free since 2025, GSAP Standard License)
+for (const p of PLUGINS) fs.copyFileSync(path.join(root, `node_modules/gsap/dist/${p}.min.js`), path.join(PUB, `${p}.min.js`));
 fs.copyFileSync(path.join(TDIR, TM.logo), path.join(PUB, 'logo.svg'));
 for (const f of TM.fonts || []) { fs.mkdirSync(path.dirname(path.join(PUB, f.file)), { recursive: true }); fs.copyFileSync(path.join(TDIR, f.file), path.join(PUB, f.file)); }
 fs.writeFileSync(path.join(PUB, 'theme.css'), `/* theme: ${TM.name} */
@@ -64,8 +78,20 @@ for (const b of B) { if (b.c === 'title' || b.c === 'cta') continue; const k = [
   if (k && ['split', 'dense'].includes(layoutAt(b.s + .3)) && k.t - .4 > b.s) console.warn(`camera: '${b.c}' enters at ${b.s.toFixed(2)}s before the split move starts (${(k.t - .4).toFixed(2)}s) — use snapBefore()`); }
 
 // ---------- compose ----------
-let html = '', js = '';
+let html = '', js = '', annots = '';
 B.forEach((b, i) => {
+  // annot: [{ sel, kind: 'circle'|'underline'|'box'|'strike', at, pad, dur, color }] — rough.js hand-drawn emphasis on a graphic's element
+  (b.annot || []).forEach((a, k) => {
+    const aid = `b${i}-a${k}`, col = TH[a.color || 'accent'] || a.color, pad = a.pad ?? 14;
+    annots += `<svg class="annot" id="${aid}" viewBox="0 0 1000 1000" preserveAspectRatio="none"><path d="${roughPath(a.kind || 'circle', 7 + i * 13 + k)}" fill="none" stroke="${col}" stroke-width="${a.width ?? 4}" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/></svg>`;
+    js += `(() => { const root = document.getElementById('b${i}-in'), el = root && root.querySelector(${JSON.stringify(a.sel)}), svg = document.getElementById('${aid}');
+  if (!el || !svg) { console.warn('annot target missing: ${a.sel}'); return; }
+  root.appendChild(svg); let x = 0, y = 0, n = el; while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+  const kind = ${JSON.stringify(a.kind || 'circle')}, w = el.offsetWidth, h = el.offsetHeight, p = ${pad};
+  const box = kind === 'underline' ? [x - 4, y + h - 6, w + 8, 18] : kind === 'strike' ? [x - 6, y + h / 2 - 9, w + 12, 18] : [x - p, y - p, w + 2 * p, h + 2 * p];
+  Object.assign(svg.style, {left: box[0] + 'px', top: box[1] + 'px', width: box[2] + 'px', height: box[3] + 'px'});
+  tl.to('#${aid} path', {strokeDashoffset: 0, duration: ${a.dur ?? .6}, ease: 'power2.inOut'}, ${a.at.toFixed(2)}); })();\n`;
+  });
   const id = `b${i}`, comp = C[b.c](id, b.d);
   // dense + below: main graphic in the upper part, a companion visual (a second load type) in the lower part
   let inner;
@@ -125,15 +151,16 @@ document.querySelectorAll('.cap').forEach(c => { const s = +c.dataset.start;
     if (k === 0) { gsap.set(w, {color: col}); return; } tl.to(w, {color: col, duration: .1, ease: 'none'}, Math.max(s, +w.dataset.t - .05)); }); });\n`;
 
 const page = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=1920"/>
-<script src="gsap.min.js"></script><link rel="stylesheet" href="components.css"/><link rel="stylesheet" href="theme.css"/><style>.cap .w { color: ${TM.caption.unread}; }</style></head><body>
+<script src="gsap.min.js"></script>${PLUGINS.map((p) => `<script src="${p}.min.js"></script>`).join('')}<link rel="stylesheet" href="components.css"/><link rel="stylesheet" href="theme.css"/><style>.cap .w { color: ${TM.caption.unread}; }</style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="${D}" data-width="1080" data-height="1920">
   <div id="cam"><video id="a-roll" class="clip" src="source.mp4" muted playsinline data-start="0" data-duration="${D}" data-track-index="0"></video></div>
   <audio id="a-roll-audio" src="source.mp4" data-start="0" data-duration="${D}" data-track-index="2" data-volume="1"></audio>
-${html}${rail}  <div class="logo${TM.logoPill === false ? ' bare' : ''}"><img src="logo.svg" alt="Knock〃"/></div>
+${html}<div id="annot-holder" style="display:none">${annots}</div>${rail}  <div class="logo${TM.logoPill === false ? ' bare' : ''}"><img src="logo.svg" alt="Knock〃"/></div>
   <div class="caps ${TM.caption.style}">
 ${capHtml}  </div>
 </div>
 <script>
+gsap.registerPlugin(${PLUGINS.join(', ')});
 const tl = gsap.timeline({paused: true});
 ${js}
 tl.set({}, {}, ${D});

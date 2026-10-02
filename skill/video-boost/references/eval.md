@@ -4,6 +4,7 @@
 每一条都能追到用户在迭代里拍过板的决定（右列），改标准先改这里。
 
 ```
+node audit.mjs runs/<name>                                    # 先量字号与位置（默认 --platform xhs）
 python3 eval.py runs/<name>                                   # 默认主题 → runs/<name>/eval.md
 python3 eval.py runs/<name> --public public-<theme>            # 别的主题 → eval-<theme>.md
 ```
@@ -38,7 +39,17 @@ python3 eval.py runs/<name> --public public-<theme>            # 别的主题 �
 | C6 | 让位先于图形入场 | 镜头开始让位（t−0.4s）不晚于图形入场 | 「split 的落位要早于图形入场」 |
 | C5 | 人单独在场占比 | 25–60%（低于 25% 说明图形太满） | 「人是内容」 |
 
-**自动分** = B+C 各项 PASS=1 / WARN=0.5 / FAIL=0 的平均 ×100。
+## T / S 字号与安全区（自动，先跑 `node audit.mjs runs/<name> [--platform xhs]`，它在无头 Chrome 里把时间线拨到每个图形的中段和末段，量出每段文字实际渲染的字号与位置）
+| # | 检查 | 判定 | 来源 |
+|---|---|---|---|
+| T1 | 字号都在阶梯上 | 只允许 22/28/36/54/96/140 | references/typography.md §1 |
+| T2 | 每个图形 ≤3 档阅读字号 | micro、display/hero 另计；4 档 WARN，5 档以上 FAIL | 「字整体偏大、层级乱」的纠偏 |
+| T3 | 没有小于 22px 的文字 | 动画中途的缩放不算 | 手机可读下限 |
+| T4 | 字幕是最大的阅读文字 | 比字幕大的元素每个图形最多 1 个 | BBC 字幕规范 |
+| T5 | micro 只给来源、标签、缩略卡片 | 其余 micro 字数 ≤25% | 层级规则 |
+| S1 | 文字避开平台界面 | 按 `--platform` 的上/下/右留白，10px 容差；界面骨架（进度标、logo、字幕）也查 | 各平台安全区 |
+
+**自动分** = B+C+T+S 各项 PASS=1 / WARN=0.5 / FAIL=0 的平均 ×100。
 
 ## H 人工评分（1–5，写到秒）
 | # | 维度 | 1 分 | 3 分 | 5 分 |

@@ -82,7 +82,7 @@ MOCK_SET = {'cc', 'folio', 'resume', 'checktable', 'term'}
 nums_unsourced = []
 for b in B:
     toks = re.findall(r'\d+(?:\.\d+)?\s*(?:[KkMB%]|亿|万|km/s)?', b['text'])
-    toks = [t.strip() for t in toks if not re.fullmatch(r'0\d', t.strip()) and t.strip() not in ('1', '2', '3', '4', '5', '6')]
+    toks = [t.strip() for t in toks if not re.fullmatch(r'0\d', t.strip()) and t.strip() not in ('1', '2', '3', '4', '5', '6') and not re.fullmatch(r'0+(\.0+)?\s*\S*', t.strip())]   # counters at 0 are not claims
     foreign = [t for t in toks if re.sub(r'\D', '', t) and re.sub(r'\D', '', t) not in re.sub(r'\D', '', speech)]
     if foreign and '来源' not in b['text'] and '①' not in b['text']:
         nums_unsourced.append((b['c'], b['s'], foreign[:4]))
@@ -152,11 +152,42 @@ add('C4', '运镜', '硬切放大只给钩子（≤1 次，前 15%）', 'PASS' i
 full_share = sum(1 for i in range(int(D * 2)) if layout_at(i / 2) in ('full', 'push', 'punch')) / int(D * 2)
 add('C5', '运镜', '人单独在场占比（参考 25–60%）', 'PASS' if .25 <= full_share <= .6 else 'WARN', f'全屏/推近 {full_share:.0%}')
 
+# ---------------- T 字号与安全区（需要先跑 node audit.mjs，读 <public>/audit.json）----------------
+AUD = f'{run}/{pub}/audit.json'
+if os.path.exists(AUD):
+    A = json.load(open(AUD)); SCALE = {22, 28, 36, 54, 96, 140}; CAPPX = (A['chrome'].get('captions') or {}).get('px') or 76
+    off, many, tiny, loud, microheavy, unsafe = [], [], [], [], [], []
+    sf = A['safe']; top, bot, right = sf['top'] - 10, 1920 - sf['bottom'] + 10, 1080 - sf['right'] + 10   # 10px tolerance for glyph boxes
+    for b in A['beats']:
+        it = [x for x in b['items'] if x.get('sc', 1) >= .97 and x.get('sc', 1) <= 1.03]   # ignore elements caught mid-animation
+        bad = sorted({x['fs'] for x in it if x['fs'] not in SCALE})
+        if bad: off.append((b['c'], b['s'], bad))
+        tiers = sorted({x['fs'] for x in it if x['fs'] in SCALE and 22 < x['fs'] < 96})   # micro (sources/labels) and display/hero are counted separately
+        if len(tiers) > 3: many.append((b['c'], round(b['s']), tiers))
+        sm = [x['text'] for x in it if x['px'] < 22 and x['chars'] >= 2]
+        if sm: tiny.append((b['c'], round(b['s']), sm[:3]))
+        big = list({(x['box'][2] // 40, x['box'][1] // 40): x['text'] for x in it if x['px'] > CAPPX}.values())   # same spot = same element across samples
+        if len(big) > 1: loud.append((b['c'], round(b['s']), big[:3]))
+        ch = sum(x['chars'] for x in it) or 1; mc = sum(x['chars'] for x in it if x['fs'] <= 22 and not re.search(r'src|df|foot|unit|^b$|tag|cv|sec|doc|lab', x['cls']))   # source footnotes and thumbnail cards may be micro
+        if mc / ch > .25: microheavy.append((b['c'], round(b['s']), f'{mc / ch:.0%}'))
+        out_ = [x['text'] for x in b['items'] if x['box'][1] < top or x['box'][3] > bot or x['box'][2] > right]
+        if out_: unsafe.append((b['c'], round(b['s']), out_[:3]))
+    add('T1', '字号', '字号都在阶梯上（22/28/36/54/96/140）', 'PASS' if not off else 'FAIL', f'{len(off)} 个图形有阶梯外字号' + (f'：{off}' if off else ''))
+    add('T2', '字号', '每个图形 ≤3 档阅读字号（来源 micro、display/hero 另计）', 'PASS' if not many else 'WARN' if all(len(t) == 4 for *_, t in many) else 'FAIL', f'{len(many)} 个超标' + (f'：{many}' if many else ''))
+    add('T3', '字号', '没有小于 22px 的文字', 'PASS' if not tiny else 'FAIL', f'{len(tiny)} 处' + (f'：{tiny}' if tiny else ''))
+    add('T4', '字号', '字幕是最大的阅读文字（超过字幕字号的元素每图 ≤1）', 'PASS' if not loud else 'WARN', f'{len(loud)} 个图形' + (f'：{loud}' if loud else ''))
+    add('T5', '字号', 'micro(22) 只给来源/标签（≤25% 字数）', 'PASS' if not microheavy else 'WARN', f'{len(microheavy)} 个图形' + (f'：{microheavy}' if microheavy else ''))
+    ch_bad = [k for k, v in (('进度标', A['chrome'].get('tracker')), ('logo', A['chrome'].get('logo')), ('字幕', (A['chrome'].get('captions') or {}).get('box'))) if v and (v[1] < top or v[3] > bot or v[2] > right)]
+    add('S1', '安全区', f'文字避开平台 UI（{A["platform"]}：上 {sf["top"]} / 下 {sf["bottom"]} / 右 {sf["right"]}px）', 'PASS' if not unsafe and not ch_bad else 'WARN',
+        (f'界面骨架越界：{ch_bad}；' if ch_bad else '') + f'图形文字越界 {len(unsafe)} 处' + (f'：{unsafe}' if unsafe else ''))
+else:
+    add('T0', '字号', '字号与安全区检查', 'WARN', '没有 audit.json，先跑 node audit.mjs runs/<name>')
+
 # ---------------- report ----------------
 icon = {'PASS': '✅', 'WARN': '⚠️', 'FAIL': '❌', 'INFO': 'ℹ️'}
 gate_fail = any(st == 'FAIL' and i.startswith('A') for i, _, _, st, _ in R)
 nP = sum(x[3] == 'PASS' for x in R)
-BC = [x for x in R if not x[0].startswith('A')]
+BC = [x for x in R if not x[0].startswith('A')]  # B/C/T/S all count toward the auto score
 auto = round(100 * sum({'PASS': 1, 'WARN': .5}.get(x[3], 0) for x in BC) / max(1, len(BC)))
 title = f'# Video Boost Eval · {os.path.basename(run)} · 主题 {theme}\n'
 lines = [title, f'成片：`{out_path}`　时长 {src_d:.1f}s　图形 {nG} 个\n',

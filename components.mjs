@@ -351,14 +351,22 @@ ${knock(`#${id}-tag`, d.tagAt + .5)}`,
       html: `<div class="k-ctx"><div class="hd" id="${id}-hd">${md(d.title)}</div>
   <div class="plot"><i class="axis" id="${id}-ax"></i>
   ${d.nodes.map((nd, i) => `<div class="nd" id="${id}-n${i}" style="left:${x(i) - 80}px"><b class="bar" id="${id}-bar${i}" style="height:${h(nd.v)}px"></b><span class="v" style="bottom:${h(nd.v) + 82}px">${md(nd.label)}</span><span class="dt">${md(nd.date)}</span><span class="m">${md(nd.model)}</span></div>`).join('')}
-  <div class="patch" id="${id}-patch">${md(d.patch.t)}</div></div>
+  <div class="patch" id="${id}-patch"><svg class="pt-svg" viewBox="0 0 240 64" width="240" height="64">
+    <path id="${id}-pl" d="M14 2 H120 V62 H14 Q2 62 2 50 V14 Q2 2 14 2 Z" fill="${TH.card}" stroke="${TH.accent}" stroke-width="3" stroke-dasharray="7 6"/>
+    <path id="${id}-pr" d="M120 2 H226 Q238 2 238 14 V50 Q238 62 226 62 H120 Z" fill="${TH.card}" stroke="${TH.accent}" stroke-width="3" stroke-dasharray="7 6"/></svg>
+    <span class="pt-t" id="${id}-pt">${md(d.patch.t)}</span></div></div>
   <div class="src" id="${id}-src">${md(d.src)}</div></div>`,
       js: `${rise(`#${id}-hd`, d.at)}
 tl.from('#${id}-ax', {scaleX: 0, transformOrigin: '0 50%', duration: .6, ease: 'power2.out'}, ${d.at + .2});
 ${d.nodes.map((nd, i) => `tl.from('#${id}-n${i}', {opacity: 0, y: 14, duration: .35, ease: 'expo.out'}, ${nd.at});
 tl.from('#${id}-bar${i}', {scaleY: 0, transformOrigin: '50% 100%', duration: .6, ease: 'power3.out'}, ${nd.at + .1});`).join('\n')}
 ${rise(`#${id}-patch`, d.patch.at, .35)}
-${d.patch.breakAt.map((b, k) => `tl.to('#${id}-patch', {opacity: ${k === d.patch.breakAt.length - 1 ? 0 : .5 - k * .2}, rotate: ${(k + 1) * 6}, y: ${(k + 1) * 18}, duration: .4, ease: 'power2.in'}, ${b});`).join('\n')}
+tl.to('#${id}-pl', {morphSVG: 'M14 2 H112 L126 18 L110 34 L124 50 L116 62 H14 Q2 62 2 50 V14 Q2 2 14 2 Z', duration: .35, ease: 'power2.out'}, ${d.patch.breakAt[0]});
+tl.to('#${id}-pr', {morphSVG: 'M128 2 H226 Q238 2 238 14 V50 Q238 62 226 62 H124 L132 50 L118 34 L134 18 Z', duration: .35, ease: 'power2.out'}, ${d.patch.breakAt[0]});
+tl.to('#${id}-pt', {opacity: .5, duration: .3}, ${d.patch.breakAt[0]});
+tl.to('#${id}-pl', {x: -26, y: 70, rotation: -18, transformOrigin: '50% 50%', opacity: 0, duration: .7, ease: 'power2.in'}, ${d.patch.breakAt[d.patch.breakAt.length - 1]});
+tl.to('#${id}-pr', {x: 26, y: 90, rotation: 22, transformOrigin: '50% 50%', opacity: 0, duration: .7, ease: 'power2.in'}, ${d.patch.breakAt[d.patch.breakAt.length - 1]});
+tl.to('#${id}-pt', {opacity: 0, y: 30, duration: .4}, ${d.patch.breakAt[d.patch.breakAt.length - 1]});
 tl.from('#${id}-src', {opacity: 0, duration: .3}, ${d.srcAt});`,
     };
   },
@@ -452,5 +460,35 @@ tl.from('#${id}-zl em', {opacity: 0, duration: .3}, ${d.dangerAt});
 tl.to('#${id}-zl', {backgroundColor: 'color-mix(in srgb, ${TH.accent} 10%, transparent)', duration: .4}, ${d.dangerAt});
 tl.from('#${id}-zr', {opacity: 0, scale: .9, duration: .45, ease: 'back.out(1.8)'}, ${d.safeAt});
 ${knock(`#${id}-zr em`, d.safeAt + .5)}`,
+  }),
+  // ---------- ABS-01 物理隐喻 · 逃逸轨道（GSAP MotionPath + DrawSVG）：星球与引力圈先在场 → 火箭沿轨道加速 → 越过引力圈 ----------
+  escape: (id, d) => ({
+    html: `<div class="k-esc" id="${id}"><svg viewBox="0 0 952 560" width="952" height="560">
+    <circle cx="250" cy="430" r="90" fill="${TH.ink}"/>
+    <circle id="${id}-grav" cx="250" cy="430" r="240" fill="none" stroke="${TH.ink40}" stroke-width="3" stroke-dasharray="10 12"/>
+    <path id="${id}-traj" d="M300 370 C 380 290, 430 230, 540 190 S 760 120, 900 60" fill="none" stroke="none"/>
+    <path id="${id}-trail" d="M300 370 C 380 290, 430 230, 540 190 S 760 120, 900 60" fill="none" stroke="${TH.accent}" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14"/>
+    <g id="${id}-rk"><path d="M-30 -14 L22 0 L-30 14 L-20 0 Z" fill="${TH.accent}"/><circle cx="-2" cy="0" r="4" fill="${TH.card}"/></g>
+  </svg>
+  <div class="lbl l-planet" id="${id}-lp">${md(d.planet)}</div>
+  <div class="lbl l-grav" id="${id}-lg">${md(d.grav)}</div>
+  <div class="lbl l-rk" id="${id}-lr">${md(d.rocket)}</div>
+  <div class="read" id="${id}-rd"><b id="${id}-num">0.0</b><small>${esc(d.unit)}</small><span>${md(d.readLabel)}</span></div>
+  <div class="lbl l-out" id="${id}-lo">${md(d.out)}</div></div>`,
+    js: `tl.from('#${id} svg', {opacity: 0, duration: .4}, ${d.at});
+${rise(`#${id}-lp`, d.at + .2, .35)}
+tl.fromTo('#${id}-grav', {drawSVG: '0%'}, {drawSVG: '100%', duration: .9, ease: 'power2.inOut'}, ${d.at + .3});
+gsap.set('#${id}-rk', {x: 300, y: 370, rotation: -45});
+tl.fromTo('#${id}-trail', {drawSVG: '0%'}, {drawSVG: '0% 55%', duration: 1.6, ease: 'power2.in'}, ${d.launchAt});
+tl.to('#${id}-rk', {motionPath: {path: '#${id}-traj', align: '#${id}-traj', autoRotate: true, alignOrigin: [0.5, 0.5], start: 0, end: .55}, duration: 1.6, ease: 'power2.in'}, ${d.launchAt});
+(() => { const o = {v: 0}, el = document.getElementById('${id}-num'); tl.to(o, {v: ${d.speed}, duration: 1.6, ease: 'power2.in', onUpdate: () => { el.textContent = o.v.toFixed(1); }}, ${d.launchAt}); })();
+${rise(`#${id}-rd`, d.launchAt, .35)}
+${rise(`#${id}-lr`, d.relabelAt, .35)}
+tl.to('#${id}-grav', {stroke: '${TH.ink}', duration: .3}, ${d.gravAt});
+${rise(`#${id}-lg`, d.gravAt, .35)}
+tl.to('#${id}-trail', {drawSVG: '0% 100%', duration: 1.3, ease: 'power2.out'}, ${d.passAt});
+tl.to('#${id}-rk', {motionPath: {path: '#${id}-traj', align: '#${id}-traj', autoRotate: true, alignOrigin: [0.5, 0.5], start: .55, end: 1}, duration: 1.3, ease: 'power2.out'}, ${d.passAt});
+${rise(`#${id}-lo`, d.passAt + .6, .35)}
+${knock(`#${id}-lo`, d.passAt + .9)}`,
   }),
 };
