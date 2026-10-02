@@ -70,6 +70,14 @@ add('B1', '内容', '卡片不复述口播（字幕重合率）', 'PASS' if not 
     '｜逐个：' + '，'.join(f'{b["c"]}@{b["s"]:.0f}s {x:.0%}' for b, x in restate))
 
 speech = ''.join(c['text'] for c in CAPS)
+# spoken Chinese numerals → digits (百分之九十 → 90%, 十一点二 → 11.2) so B2 doesn't flag numbers the speaker did say
+CN = {'零': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9}
+def cn2int(x):
+    if not x: return None
+    if '十' in x:
+        a, _, b = x.partition('十'); return (CN.get(a, 1) if a else 1) * 10 + (CN.get(b, 0) if b else 0)
+    return CN.get(x)
+speech += ' '.join(str(cn2int(m)) for m in re.findall(r'[零一二两三四五六七八九十]+', speech) if cn2int(m) is not None)
 MOCK_SET = {'cc', 'folio', 'resume', 'checktable', 'term'}
 nums_unsourced = []
 for b in B:

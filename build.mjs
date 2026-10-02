@@ -67,7 +67,14 @@ for (const b of B) { if (b.c === 'title' || b.c === 'cta') continue; const k = [
 let html = '', js = '';
 B.forEach((b, i) => {
   const id = `b${i}`, comp = C[b.c](id, b.d);
-  const inner = b.c === 'title' || b.c === 'cta' ? comp.html : `<div class="zone${b.dense ? ' tall' : ''}">${comp.html}</div>`;
+  // dense + below: main graphic in the upper part, a companion visual (a second load type) in the lower part
+  let inner;
+  if (b.c === 'title' || b.c === 'cta') inner = comp.html;
+  else if (b.below) {
+    const mainH = b.below.mainH ?? 460, gap = 24, sub = C[b.below.c](id + 'b', b.below.d);
+    inner = `<div class="zone tall split2"><div class="z-main" style="--zh:${mainH}px">${comp.html}</div><div class="z-below" style="top:${mainH + gap}px;--zh:${760 - mainH - gap}px">${sub.html}</div></div>`;
+    js += sub.js + '\n';
+  } else inner = `<div class="zone${b.dense ? ' tall' : ''}">${comp.html}</div>`;
   html += `<div id="${id}" class="clip beat" data-start="${b.s.toFixed(2)}" data-duration="${(b.e - b.s).toFixed(2)}" data-track-index="${4 + (i % 2)}"><div class="in" id="${id}-in">${inner}</div></div>\n`;
   js += comp.js + '\n';
   if (b.e < D - .1) js += `tl.to('#${id}-in', {opacity: 0, y: -30, duration: .3, ease: 'power2.in'}, ${(b.e - .3).toFixed(2)});\n`;
@@ -137,6 +144,6 @@ fs.writeFileSync(path.join(PUB, 'index.html'), page);
 // manifest for eval.py
 const strip = (h) => h.replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 fs.writeFileSync(path.join(PUB, 'manifest.json'), JSON.stringify({ theme: THEME_NAME, src: path.relative(root, SRC), D, chapters: CH, camera: CAM, layouts: L,
-  beats: B.map((b, i) => ({ i, c: b.c, s: +b.s.toFixed(2), e: +b.e.toFixed(2), text: strip(C[b.c]('m' + i, b.d).html) })),
+  beats: B.map((b, i) => ({ i, c: b.c, below: b.below?.c, s: +b.s.toFixed(2), e: +b.e.toFixed(2), text: strip(C[b.c]('m' + i, b.d).html + (b.below ? ' ' + C[b.below.c]('mb' + i, b.below.d).html : '')) })),
   captions: caps.map((c) => ({ text: c.text, start: c.start, end: c.end })) }, null, 1));
 console.log(path.basename(RUN) + ' built:', B.length, 'beats,', caps.length, 'captions,', CAM.length, 'camera keys');

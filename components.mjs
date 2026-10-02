@@ -136,7 +136,7 @@ ${knock(`#${id}-res`, d.passAt + 1.3)}`,
   // ---------- ENU-03 逐行高亮（含「展开子项」变体，只允许展开一行）----------
   lines: (id, d) => ({
     html: `<div class="k-lines"><div class="hd" id="${id}-hd">${md(d.title)}</div><div class="axis" id="${id}-ax"><span>强</span><i></i><span>弱</span></div>
-  ${d.rows.map((r, i) => `<div class="row${r.expand ? ' has-ex' : ''}" id="${id}-r${i}"><b>${String(i + 1).padStart(2, '0')}</b><span class="t">${md(r.t)}</span>${r.expand ? `<em class="tag ex" id="${id}-x${i}">${md(r.expand)}</em>` : ''}${r.tag ? `<em class="tag" id="${id}-g${i}">${md(r.tag)}</em>` : ''}</div>`).join('')}
+  ${d.rows.map((r, i) => `<div class="row${r.expand ? ' has-ex' : ''}" id="${id}-r${i}"><b>${String(i + 1).padStart(2, '0')}</b><span class="t">${md(r.t)}</span>${d.bars ? `<i class="sbar"><i id="${id}-sb${i}" style="width:${d.bars[i]}%"></i></i>` : ''}${r.expand ? `<em class="tag ex" id="${id}-x${i}">${md(r.expand)}</em>` : ''}${r.tag ? `<em class="tag" id="${id}-g${i}">${md(r.tag)}</em>` : ''}</div>`).join('')}
 </div>`,
     js: `${rise(`#${id}-hd`, d.at)}
 tl.from('#${id}-ax', {opacity: 0, duration: .4}, ${d.at + .2});
@@ -145,7 +145,9 @@ ${d.rows.map((r, i) => r.at == null ? '' : `tl.to('#${id}-r${i}', {color: '${TH.
 ${i ? `tl.to('#${id}-r${i - 1}', {color: '${TH.ink70}', x: 0, duration: .25}, ${r.at - .15});` : ''}
 ${r.expand ? `tl.from('#${id}-x${i}', {x: 20, opacity: 0, duration: .35, ease: 'power2.out'}, ${r.expandAt});` : ''}
 ${r.tag ? `tl.from('#${id}-g${i}', {scale: .4, opacity: 0, duration: .35, ease: 'back.out(2.4)'}, ${r.tagAt});` : ''}
-${r.decayAt ? `tl.to('#${id}-r${i} .t', {opacity: .35, duration: 1.6, ease: 'power1.in'}, ${r.decayAt});` : ''}`).join('\n')}`,
+${r.decayAt ? `tl.to('#${id}-r${i} .t', {opacity: .35, duration: 1.6, ease: 'power1.in'}, ${r.decayAt});` : ''}
+${d.bars && r.at != null ? `tl.from('#${id}-sb${i}', {scaleX: 0, transformOrigin: '0 50%', duration: .5, ease: 'power3.out'}, ${r.at});` : ''}
+${d.bars && r.decayAt ? `tl.to('#${id}-sb${i}', {scaleX: .3, opacity: .4, duration: 1.8, ease: 'power2.inOut'}, ${r.decayAt + .2});` : ''}`).join('\n')}`,
   }),
 
   // ---------- ENU-04 层级结构 · 阶梯（横向递减）：逐级出现，当前级点亮；末级衰减 ----------
@@ -365,7 +367,7 @@ tl.from('#${id}-src', {opacity: 0, duration: .3}, ${d.srcAt});`,
   occupied: (id, d) => ({
     html: `<div class="k-occ"><div class="hd" id="${id}-hd">${md(d.title)}</div>
   ${d.rows.map((r, i) => `<div class="row" id="${id}-r${i}"><span class="t">${md(r.t)}</span><span class="ps">${r.products.map((p, k) => `<span class="p" id="${id}-p${i}-${k}">${md(p)}</span>`).join('')}</span></div>`).join('')}
-  <div class="axis" id="${id}-ax"><span class="l">${md(d.axis.l)}</span><i class="band"><i class="dot" id="${id}-dot"></i></i><span class="r">${md(d.axis.r)}</span></div>
+  <div class="axis" id="${id}-ax"${d.axis.hide ? ' style="display:none"' : ''}><span class="l">${md(d.axis.l)}</span><i class="band"><i class="dot" id="${id}-dot"></i></i><span class="r">${md(d.axis.r)}</span></div>
   <div class="src" id="${id}-src">${md(d.src)}</div></div>`,
     js: `${rise(`#${id}-hd`, d.at)}
 ${d.rows.map((r, i) => `tl.from('#${id}-r${i}', {opacity: 0, x: -14, duration: .3, ease: 'expo.out'}, ${r.at});
@@ -373,5 +375,82 @@ tl.from('#${id} #${id}-r${i} .p', {scale: .4, opacity: 0, duration: .25, stagger
 tl.from('#${id}-ax', {opacity: 0, y: 14, duration: .35}, ${d.axis.at});
 (() => { const band = document.querySelector('#${id} .band'); const w = band ? band.clientWidth : 600; tl.to('#${id}-dot', {x: w * .88, duration: 1.4, ease: 'power2.inOut'}, ${d.axis.moveAt}); })();
 tl.from('#${id}-src', {opacity: 0, duration: .3}, ${d.axis.at + .3});`,
+  }),
+  // ===================== dense companion panels (render in the lower part of a tall zone via beat.below) =====================
+
+  // HR 关键词筛选：计数 0→N 随命中跳动 + 分段进度条（演出「HR 按关键词筛」这个动作）
+  kwmeter: (id, d) => {
+    const N = d.steps.length;
+    return {
+      html: `<div class="k-kwm" id="${id}-p"><div class="lab">${md(d.label)}<small>示意</small></div>
+  <div class="cnt"><span class="num">${Array.from({ length: N + 1 }, (_, k) => `<b id="${id}-n${k}">${k}</b>`).join('')}</span><span class="tot">/ ${N}</span></div>
+  <div class="segs">${Array.from({ length: N }, (_, k) => `<i id="${id}-s${k}"></i>`).join('')}</div>
+  <div class="note" id="${id}-note">${md(d.note || '')}</div></div>`,
+      js: `tl.from('#${id}-p', {y: 30, opacity: 0, duration: .45, ease: 'expo.out'}, ${d.at});
+gsap.set(${JSON.stringify(Array.from({ length: N }, (_, k) => `#${id}-n${k + 1}`).join(','))}, {opacity: 0});
+${d.steps.map((t, k) => `tl.set('#${id}-n${k}', {opacity: 0}, ${t.toFixed(2)});
+tl.set('#${id}-n${k + 1}', {opacity: 1}, ${t.toFixed(2)});
+tl.fromTo('#${id}-n${k + 1}', {scale: 1.4}, {scale: 1, duration: .3, ease: 'back.out(2)'}, ${t.toFixed(2)});
+tl.to('#${id}-s${k}', {backgroundColor: '${TH.mark}', borderColor: '${TH.ink}', duration: .2}, ${t.toFixed(2)});`).join('\n')}
+${d.noteAt ? rise(`#${id}-note`, d.noteAt, .35) : ''}`,
+    };
+  },
+
+  // 产出物预览 · 笔记卡片墙：卡片随结果逐张落位，交叉命中的卡片标出来
+  notes: (id, d) => ({
+    html: `<div class="k-notes" id="${id}"><div class="lab" id="${id}-lab">${md(d.title)}<small>示意</small></div>
+  <div class="wall">${d.items.map((x, i) => `<div class="nc" id="${id}-c${i}"><i class="cv" style="background:${['var(--line-soft)', 'var(--paper)', 'var(--line)'][i % 3]}"><span>${String(i + 1).padStart(2, '0')}</span></i><b>${md(x.t)}</b><em class="tag" id="${id}-g${i}">${md(d.markTag || '')}</em></div>`).join('')}</div></div>`,
+    js: `tl.from('#${id}-lab', {opacity: 0, duration: .3}, ${d.at});
+${d.items.map((x, i) => `tl.from('#${id}-c${i}', {y: 18, opacity: 0, scale: .92, duration: .35, ease: 'back.out(1.6)'}, ${x.at.toFixed(2)});`).join('\n')}
+gsap.set('#${id} .tag', {opacity: 0});
+${(d.marks || []).map((m) => `tl.to('#${id}-c${m.i}', {borderColor: '${TH.accent}', duration: .2}, ${m.at});
+tl.fromTo('#${id}-g${m.i}', {opacity: 0, scale: .4}, {opacity: 1, scale: 1, duration: .3, ease: 'back.out(2.4)'}, ${m.at});
+${knock(`#${id}-c${m.i}`, m.at + .3)}`).join('\n')}
+${d.dimAt ? `tl.to('#${id} .nc', {opacity: .35, duration: .4}, ${d.dimAt}); ${(d.marks || []).map((m) => `tl.to('#${id}-c${m.i}', {opacity: 1, duration: .1}, ${d.dimAt + .05});`).join(' ')}` : ''}`,
+  }),
+
+  // 报告预览 · 区间条：刻度轴 → 各来源数值落点 → 区间带 → logo 行 → 来源脚注
+  rangebar: (id, d) => {
+    const X = (v) => 4 + 92 * (v - d.min) / (d.max - d.min);
+    const lo = Math.min(...d.points.map((p) => p.v)), hi = Math.max(...d.points.map((p) => p.v));
+    return {
+      html: `<div class="k-rng" id="${id}"><div class="lab" id="${id}-lab">${md(d.title)}</div>
+  <div class="axis" id="${id}-ax">${d.ticks.map((t) => `<span style="left:${X(t)}%">${t}</span>`).join('')}<i class="band" id="${id}-band" style="left:${X(lo)}%;width:${X(hi) - X(lo)}%"></i>
+  ${d.points.map((p, k) => `<i class="pt" id="${id}-p${k}" style="left:${X(p.v)}%"><b>${md(p.label)}</b></i>`).join('')}</div>
+  <div class="unit">${md(d.unit)}</div>
+  <div class="logos">${d.logos.map((l, k) => `<span class="lg" id="${id}-l${k}">${md(l)}</span>`).join('')}</div>
+  <div class="src" id="${id}-src">${md(d.src)}</div></div>`,
+      js: `tl.from('#${id}-lab', {opacity: 0, duration: .3}, ${d.at});
+tl.from('#${id}-ax', {opacity: 0, duration: .4}, ${d.at + .1});
+${d.points.map((p, k) => `tl.from('#${id}-p${k}', {y: -30, opacity: 0, duration: .4, ease: 'back.out(2)'}, ${p.at});`).join('\n')}
+tl.from('#${id}-band', {scaleX: 0, transformOrigin: '0 50%', duration: .5, ease: 'power2.out'}, ${Math.max(...d.points.map((p) => p.at)) + .3});
+tl.from('#${id} .lg', {y: 14, opacity: 0, duration: .3, stagger: .15, ease: 'expo.out'}, ${d.logosAt});
+tl.from('#${id}-src', {opacity: 0, duration: .3}, ${d.srcAt});`,
+    };
+  },
+
+  // NUM-05 · 堆叠条：整体 10 格先在 → 前 n 格（已被覆盖的部分）变灰 → 剩下的格点亮
+  sharebar: (id, d) => ({
+    html: `<div class="k-shb" id="${id}"><div class="bar">${Array.from({ length: d.n }, (_, k) => `<i id="${id}-s${k}" class="${k >= d.a ? 'mine' : ''}"></i>`).join('')}</div>
+  <div class="lbl"><span class="a" id="${id}-la" style="width:${100 * d.a / d.n}%">${md(d.aLabel)}</span><span class="b" id="${id}-lb">${md(d.bLabel)}</span></div></div>`,
+    js: `tl.from('#${id} .bar i', {opacity: 0, duration: .25, stagger: .03}, ${d.at});
+tl.to(${JSON.stringify(Array.from({ length: d.a }, (_, k) => `#${id}-s${k}`).join(','))}, {backgroundColor: '${TH.ink40}', duration: .2, stagger: .07}, ${d.aAt});
+${rise(`#${id}-la`, d.aAt + .5, .35)}
+tl.to('#${id} .mine', {backgroundColor: '${TH.mark}', borderColor: '${TH.ink}', duration: .25}, ${d.bAt});
+${rise(`#${id}-lb`, d.bAt + .1, .35)}
+${knock(`#${id} .mine`, d.bAt + .5)}`,
+  }),
+
+  // 横向 ↔ 垂直坐标：模型公司的产品 logo 落在横向一侧；垂直一侧在结论处亮起「安全」
+  field: (id, d) => ({
+    html: `<div class="k-fld" id="${id}"><div class="axis"><span class="l">${md(d.left)}</span><i class="ln"></i><span class="r">${md(d.right)}</span></div>
+  <div class="zl" id="${id}-zl">${d.dots.map((x, k) => `<span class="dot" id="${id}-d${k}">${md(x.t)}</span>`).join('')}<em>${md(d.leftTag)}</em></div>
+  <div class="zr" id="${id}-zr"><em>${md(d.rightTag)}</em></div></div>`,
+    js: `tl.from('#${id} .axis', {opacity: 0, duration: .4}, ${d.at});
+${d.dots.map((x, k) => `tl.from('#${id}-d${k}', {y: -40, opacity: 0, duration: .4, ease: 'bounce.out'}, ${x.at.toFixed(2)});`).join('\n')}
+tl.from('#${id}-zl em', {opacity: 0, duration: .3}, ${d.dangerAt});
+tl.to('#${id}-zl', {backgroundColor: 'color-mix(in srgb, ${TH.accent} 10%, transparent)', duration: .4}, ${d.dangerAt});
+tl.from('#${id}-zr', {opacity: 0, scale: .9, duration: .45, ease: 'back.out(1.8)'}, ${d.safeAt});
+${knock(`#${id}-zr em`, d.safeAt + .5)}`,
   }),
 };
