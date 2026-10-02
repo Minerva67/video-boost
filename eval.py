@@ -191,7 +191,7 @@ BC = [x for x in R if not x[0].startswith('A')]  # B/C/T/S all count toward the 
 auto = round(100 * sum({'PASS': 1, 'WARN': .5}.get(x[3], 0) for x in BC) / max(1, len(BC)))
 title = f'# Video Boost Eval · {os.path.basename(run)} · 主题 {theme}\n'
 lines = [title, f'成片：`{out_path}`　时长 {src_d:.1f}s　图形 {nG} 个\n',
-         f'**门槛**：{"❌ 不通过（先修门槛项）" if gate_fail else "✅ 通过"}　**自动分（B+C）**：{auto}/100　通过 {nP}/{len(R)} 项\n',
+         f'**门槛**：{"❌ 不通过（先修门槛项）" if gate_fail else "✅ 通过"}　**自动分（B+C+T+S）**：{auto}/100　通过 {nP}/{len(R)} 项\n',
          '\n| # | 组 | 检查 | 结果 | 明细 |\n|---|---|---|---|---|']
 for i, g, n, st, d in R: lines.append(f'| {i} | {g} | {n} | {icon[st]} {st} | {d} |')
 lines.append('''
