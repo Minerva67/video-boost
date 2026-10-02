@@ -82,7 +82,7 @@ let html = '', js = '', annots = '';
 B.forEach((b, i) => {
   // annot: [{ sel, kind: 'circle'|'underline'|'box'|'strike', at, pad, dur, color }] — rough.js hand-drawn emphasis on a graphic's element
   (b.annot || []).forEach((a, k) => {
-    const aid = `b${i}-a${k}`, col = TH[a.color || 'accent'] || a.color, pad = a.pad ?? 14;
+    const aid = `annot-b${i}-${k}`, col = TH[a.color || 'accent'] || a.color, pad = a.pad ?? 14;
     annots += `<svg class="annot" id="${aid}" viewBox="0 0 1000 1000" preserveAspectRatio="none"><path d="${roughPath(a.kind || 'circle', 7 + i * 13 + k)}" fill="none" stroke="${col}" stroke-width="${a.width ?? 4}" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/></svg>`;
     js += `(() => { const root = document.getElementById('b${i}-in'), el = root && root.querySelector(${JSON.stringify(a.sel)}), svg = document.getElementById('${aid}');
   if (!el || !svg) { console.warn('annot target missing: ${a.sel}'); return; }

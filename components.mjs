@@ -464,10 +464,10 @@ ${knock(`#${id}-zr em`, d.safeAt + .5)}`,
   // ---------- ABS-01 物理隐喻 · 逃逸轨道（GSAP MotionPath + DrawSVG）：星球与引力圈先在场 → 火箭沿轨道加速 → 越过引力圈 ----------
   escape: (id, d) => ({
     html: `<div class="k-esc" id="${id}"><svg viewBox="0 0 952 560" width="952" height="560">
-    <circle cx="250" cy="430" r="90" fill="${TH.ink}"/>
-    <circle id="${id}-grav" cx="250" cy="430" r="240" fill="none" stroke="${TH.ink40}" stroke-width="3" stroke-dasharray="10 12"/>
-    <path id="${id}-traj" d="M300 370 C 380 290, 430 230, 540 190 S 760 120, 900 60" fill="none" stroke="none"/>
-    <path id="${id}-trail" d="M300 370 C 380 290, 430 230, 540 190 S 760 120, 900 60" fill="none" stroke="${TH.accent}" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14"/>
+    <circle cx="250" cy="390" r="84" fill="${TH.ink}"/>
+    <circle id="${id}-grav" cx="250" cy="390" r="190" fill="none" stroke="${TH.ink40}" stroke-width="3" stroke-dasharray="10 12"/>
+    <path id="${id}-traj" d="M300 330 C 370 260, 430 210, 540 170 S 760 110, 900 50" fill="none" stroke="none"/>
+    <path id="${id}-trail" d="M300 330 C 370 260, 430 210, 540 170 S 760 110, 900 50" fill="none" stroke="${TH.accent}" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14"/>
     <g id="${id}-rk"><path d="M-30 -14 L22 0 L-30 14 L-20 0 Z" fill="${TH.accent}"/><circle cx="-2" cy="0" r="4" fill="${TH.card}"/></g>
   </svg>
   <div class="lbl l-planet" id="${id}-lp">${md(d.planet)}</div>
@@ -478,7 +478,7 @@ ${knock(`#${id}-zr em`, d.safeAt + .5)}`,
     js: `tl.from('#${id} svg', {opacity: 0, duration: .4}, ${d.at});
 ${rise(`#${id}-lp`, d.at + .2, .35)}
 tl.fromTo('#${id}-grav', {drawSVG: '0%'}, {drawSVG: '100%', duration: .9, ease: 'power2.inOut'}, ${d.at + .3});
-gsap.set('#${id}-rk', {x: 300, y: 370, rotation: -45});
+gsap.set('#${id}-rk', {x: 300, y: 330, rotation: -45});
 tl.fromTo('#${id}-trail', {drawSVG: '0%'}, {drawSVG: '0% 55%', duration: 1.6, ease: 'power2.in'}, ${d.launchAt});
 tl.to('#${id}-rk', {motionPath: {path: '#${id}-traj', align: '#${id}-traj', autoRotate: true, alignOrigin: [0.5, 0.5], start: 0, end: .55}, duration: 1.6, ease: 'power2.in'}, ${d.launchAt});
 (() => { const o = {v: 0}, el = document.getElementById('${id}-num'); tl.to(o, {v: ${d.speed}, duration: 1.6, ease: 'power2.in', onUpdate: () => { el.textContent = o.v.toFixed(1); }}, ${d.launchAt}); })();

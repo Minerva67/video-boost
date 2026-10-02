@@ -418,8 +418,8 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-esc { position: absolute; inset: 0; }
 .k-esc svg { position: absolute; left: 0; top: 0; overflow: visible; }
 .k-esc .lbl { position: absolute; white-space: nowrap; font: 700 var(--fs-small)/1.2 var(--cn); }
-.k-esc .l-planet { left: 196px; top: 416px; color: var(--card); font-size: var(--fs-small); }
-.k-esc .l-grav { left: 400px; top: 470px; color: var(--ink70); font-weight: 500; }
+.k-esc .l-planet { left: 196px; top: 376px; color: var(--card); font-size: var(--fs-small); }
+.k-esc .l-grav { left: 380px; top: 470px; color: var(--ink70); font-weight: 500; }
 .k-esc .l-rk { left: 300px; top: 150px; color: var(--accent); }
 .k-esc .l-out { right: 10px; top: 10px; padding: 8px 18px; border-radius: 999px; background: var(--mark); }
 .k-esc .read { position: absolute; right: 20px; bottom: 30px; text-align: right; }
