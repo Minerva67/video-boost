@@ -1,0 +1,21 @@
+:root {
+  --knock-door-yellow: #FAE36B;
+  --knock-knock-orange: #EF6A2F;
+  --knock-ink: #151716;
+  --knock-stone: #E3DFD5;
+  --knock-white: #FFFFFF;
+  --knock-paper: #FBF8F1;
+  --knock-ink-70: #5B5D5C;
+  --knock-mute: #6B6A66;
+  --knock-ink-40: #A1A2A2;
+  --knock-success: #2F7D4F;
+  --knock-warning: #8A5D00;
+  --knock-error: #C0352B;
+  --knock-info: #3D5A80;
+  --knock-font-display: 'Outfit', 'Noto Sans SC', system-ui, 'PingFang SC', sans-serif;
+  --knock-font-text: 'DM Sans', 'Noto Sans SC', system-ui, 'PingFang SC', sans-serif;
+  --knock-radius-pill: 999px;
+  --knock-radius-input: 12px;
+  --knock-radius-card: 18px;
+  --knock-stroke: 1.5px;
+}

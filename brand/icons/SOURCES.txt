@@ -1,0 +1,11 @@
+openai Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/openai.svg
+gemini Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/gemini.svg
+google Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/google.svg
+claudecode Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/claudecode.svg
+codex Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/codex.svg
+deepmind Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/deepmind.svg
+claude Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/claude.svg
+anthropic Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/anthropic.svg
+perplexity Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/perplexity.svg
+runway Lobe Icons (MIT) https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/runway.svg
+xiaohongshu Simple Icons (CC0) https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/xiaohongshu.svg

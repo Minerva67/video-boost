@@ -1,0 +1,6 @@
+{ "name": "Knock〃 B 线", "paper": "#FBF8F1", "card": "#FFFFFF", "ink": "#151716", "ink70": "#5B5D5C", "ink40": "#A1A2A2",
+  "line": "#E3DFD5", "lineSoft": "#EEEBE3", "mark": "#FAE36B", "markInk": "#151716", "accent": "#EF6A2F", "frame": "#151716",
+  "stroke": "1.5px", "shadow": "none", "radius": "18px", "camLine": "#DDD9CE",
+  "fontCn": "'Noto Sans SC', 'PingFang SC', sans-serif", "fontEn": "'Outfit', 'PingFang SC', sans-serif", "fontMono": "'SF Mono', Menlo, 'PingFang SC', monospace",
+  "fonts": [{ "family": "Outfit", "file": "Outfit.ttf" }], "logo": "logo.svg", "logoPill": true,
+  "caption": { "style": "pill", "read": "#151716", "unread": "#A1A2A2", "hl": "#EF6A2F" } }

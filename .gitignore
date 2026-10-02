@@ -1,0 +1,23 @@
+node_modules/
+.venv/
+.DS_Store
+*.bak*
+*.mp4
+*.mov
+*.MOV
+*.wav
+# runs: keep only the per-video beat sheets as examples
+runs/**
+!runs/example/
+!runs/example/beats.mjs
+# private brand themes stay local
+brand/themes/*
+!brand/themes/knock/
+# superseded
+SKILL.v1-outdated.md
+build3.mjs
+build4.mjs
+build5.mjs
+build.mjs.bak-pretheme
+
+.private-terms
