@@ -31,8 +31,11 @@ npx hyperframes lint runs/<name>/public            # 0 error 即可（caption �
 HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
   npx hyperframes render runs/<name>/public --sdr -q draft -o runs/<name>/draft.mp4   # 156s ≈ 100s
 ./review.sh runs/<name>/draft.mp4 <每段末尾的时间点…>   # 出联系表，逐张看
-# 修完 → 去掉 -q draft 出正式版 output.mp4 → 拷到 ~/Desktop/口播增强_<版本>_<主题>.mp4 → SendUserFile
+# 修完 → 去掉 -q draft 出正式版 output.mp4
+./evaluate.sh runs/<name> [--theme <主题>] [--platform xhs]   # 最后一步：Eval（测字号/安全区 + 23 项自动检查）→ runs/<name>/eval.md
+# 门槛不过不交付；WARN 逐条判断能修就修、修完重跑；通过后 → 拷到 ~/Desktop/口播增强_<版本>_<主题>.mp4 → SendUserFile
 ```
+**每一支片子都以 Eval 收尾，交付消息里必须写：门槛是否通过、自动分、剩下的 WARN 以及为什么可以接受。**
 
 环境：ffmpeg/ffprobe 在 `~/.local/bin`；whisper 模型 `~/.cache/kvb-models/ggml-medium-q5_0.bin`（被清盘删过一次，prep.sh 会自动重下，515MB）；渲染用系统 Chrome。
 
@@ -120,7 +123,7 @@ HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-co
 **让位（split）用 `snapBefore()`**：只往前找停顿，保证人先开始让位、图形后入场（build 会对违反的图形报警，Eval C6 检查）。其余移动用 `snap()` 吸到说话停顿（voiced.json 的间隙；±0.7s 找不到就放宽到 ±1.4s；语速快到完全没停顿时退到最近的字幕断点），镜头不在词中间动；split 的落位要早于图形入场。
 
 ## Eval（交付前必跑）
-`node audit.mjs runs/<name>` 然后 `python3 eval.py runs/<name> [--public public-<theme>]` → `eval*.md`：门槛 A1–A5（不过不交付）+ 自动 B1–B6/C1–C5 + 人工 H1–H6 评分表。标准、阈值、出处、基线分见 `references/eval.md`。交付时报：门槛是否通过、自动分、主要 WARN 及是否属于可接受的判断项。
+流水线最后一步 `./evaluate.sh runs/<name>`（内部先跑 `node audit.mjs` 实测字号与位置，再跑 `python3 eval.py`）→ `eval*.md`：门槛 A1–A5（不过不交付）+ 自动 B1–B6/C1–C5 + 人工 H1–H6 评分表。标准、阈值、出处、基线分见 `references/eval.md`。交付时报：门槛是否通过、自动分、主要 WARN 及是否属于可接受的判断项。
 
 ## 交付前自检（看 review 联系表，每段末尾一帧 + 每个示意界面 3–4 帧）
 - 有没有卡片在复述字幕？有就删。

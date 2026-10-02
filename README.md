@@ -20,7 +20,7 @@ python3 -m venv .venv && .venv/bin/pip install pywhispercpp
 # 写 runs/<name>/beats.mjs（模板：runs/example/beats.mjs）
 node build.mjs runs/<name> [--theme=<name>]
 npx hyperframes render runs/<name>/public --sdr -o runs/<name>/output.mp4
-python3 eval.py runs/<name>
+./evaluate.sh runs/<name>                       # 最后一步：Eval（字号/安全区实测 + 自动检查），门槛不过不交付
 ```
 
 ## 目录
