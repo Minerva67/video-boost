@@ -12,5 +12,6 @@ ffmpeg -v error -y -i "$R/source.mp4" -ac 1 -ar 16000 "$R/audio.wav"
 [ -f ~/.cache/kvb-models/ggml-medium-q5_0.bin ] || { mkdir -p ~/.cache/kvb-models; curl -L -o ~/.cache/kvb-models/ggml-medium-q5_0.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_0.bin; }
 .venv/bin/python transcribe_beam.py "$R" 2>/dev/null | grep -v -E "^(whisper|ggml)"
 python3 resegment.py "$R"
-ffprobe -v error -show_entries format=duration:stream=width,height -of compact "$R/source.mp4"
-echo "next: write $R/script.txt (proofread, | = caption break, ≤10 字/屏), then: .venv/bin/python align.py $R <dur> && .venv/bin/python fix_caps.py $R <dur>"
+python3 check_asr.py "$R"
+DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$R/source.mp4"); echo "时长 $DUR s"
+echo "next: write $R/script.txt (proofread, | = caption break, ≤10 字/屏), then: .venv/bin/python align.py $R $DUR \&\& .venv/bin/python fix_caps.py $R $DUR"

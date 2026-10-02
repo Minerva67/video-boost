@@ -46,12 +46,22 @@ const snap = (x) => { for (const win of [.7, 1.4]) { let best = null; for (const
   if (cb != null) return +cb.toFixed(2);
   console.warn('snap: no pause or phrase break near', x); return +x.toFixed(2); };
 const L = { full: { s: 1, x: 0, y: 0 }, split: { s: .62, x: 205, y: 730 }, push: { s: 1.06, x: -32, y: -48 }, punch: { s: 1.14, x: -76, y: -112 } };
-const beatsMod = (await import(path.join(RUN, 'beats.mjs'))).default({ t, D, snap });
+// snapBefore(x): for 'split' moves, x = when the graphic enters. The move is centred on the returned time and starts .4s
+// earlier, so any pause/phrase break ≤ x + .4 keeps "person moves aside before the graphic enters". Prefer the latest
+// real pause in [x-1.4, x+.4], else the latest phrase break (caption start) there, else x.
+const snapBefore = (x) => { let best = null; for (const [a, b] of GAPS) { const m = (a + b) / 2; if (m <= x + .4 && x - m <= 1.4 && (best == null || m > best)) best = m; }
+  if (best == null) for (const c of capsRaw) if (c.start <= x + .4 && x - c.start <= 1.4 && (best == null || c.start > best)) best = c.start;
+  return +(best ?? x).toFixed(2); };
+const beatsMod = (await import(path.join(RUN, 'beats.mjs'))).default({ t, D, snap, snapBefore });
 HL = beatsMod.HL || [];
 Object.assign(L, beatsMod.LAYOUT || {});
 const { CH, B, CAM } = beatsMod, TRACK = beatsMod.TRACK || { intro: true, recap: false };
 const caps = capsRaw.map((c, ci) => ({ ...c, chars: chars.filter((x) => x.cap === ci).map((x) => x.start), hl: HL.filter((h) => c.text.includes(h)) }));
 console.log('camera:', CAM.map((k) => k.t + ':' + k.l).join(' '));
+// guard: every graphic must enter after the camera has started moving aside
+const layoutAt = (x) => { let cur = 'full'; for (const k of [...CAM].sort((a, b) => a.t - b.t)) if (k.t <= x) cur = k.l; return cur; };
+for (const b of B) { if (b.c === 'title' || b.c === 'cta') continue; const k = [...CAM].filter((k) => k.l === 'split' && k.t - .4 <= b.s + .6).sort((a, c) => c.t - a.t)[0];
+  if (k && layoutAt(b.s + .3) === 'split' && k.t - .4 > b.s) console.warn(`camera: '${b.c}' enters at ${b.s.toFixed(2)}s before the split move starts (${(k.t - .4).toFixed(2)}s) — use snapBefore()`); }
 
 // ---------- compose ----------
 let html = '', js = '';

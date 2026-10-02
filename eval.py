@@ -130,6 +130,15 @@ for b in B:
         if layout_at(t) != 'split': mis.append((b['c'], round(t, 1))); break
 add('C3', '运镜', '图形在场时人一定让位', 'PASS' if not mis else 'FAIL', f'{len(mis)} 个图形压在全屏人像上' + (f'：{mis}' if mis else ''))
 
+late = []
+for b in B:
+    if b['c'] in ('title', 'cta'): continue
+    ks = [k for k in CAM if k['l'] == 'split' and k['t'] - .4 <= b['s'] + .6]
+    if ks:
+        k = max(ks, key=lambda k: k['t'])
+        if k['t'] - .4 > b['s'] + .02: late.append((b['c'], round(b['s'], 2), round(k['t'] - .4, 2)))
+add('C6', '运镜', '让位先于图形入场', 'PASS' if not late else 'FAIL', f'{len(late)} 个图形比镜头先到' + (f'（组件, 图形入场, 镜头开始让位）：{late}' if late else ''))
+
 punch = [k for k in CAM if k['l'] == 'punch']
 add('C4', '运镜', '硬切放大只给钩子（≤1 次，前 15%）', 'PASS' if len(punch) <= 1 and all(k['t'] <= .15 * D for k in punch) else 'WARN', f'{len(punch)} 次 punch')
 full_share = sum(1 for i in range(int(D * 2)) if layout_at(i / 2) in ('full', 'push', 'punch')) / int(D * 2)

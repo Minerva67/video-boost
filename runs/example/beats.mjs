@@ -1,10 +1,11 @@
 // Beat sheet template — copy to runs/<name>/beats.mjs and replace the placeholder phrases with exact phrases from the
 // corrected transcript (script.txt). Every time comes from t('phrase'), never hand-typed seconds.
-export default ({ t, D, snap }) => {
+export default ({ t, D, snap, snapBefore }) => {
 const HL = ['关键词A', '关键词B'];                        // caption keywords coloured with the theme accent
 
 // chapters → the persistent N-point tracker (intro shows "N 点", recap ticks all)
-const CH = [[0, '开场'], [t('第一点'), '要点一'], [t('第二点'), '要点二'], [t('总结一下'), '回顾']];
+// chapter titles = the point's conclusion (verb phrase / judgement, ≤7 字), not a topic noun — see references/rules.md §4
+const CH = [[0, '开场'], [t('第一点'), '先做出作品'], [t('第二点'), '卖经验不卖工具'], [t('总结一下'), '回顾']];
 const TRACK = { intro: true, recap: true };
 
 const B = [
@@ -27,7 +28,7 @@ const B = [
 // camera rules: split only while a graphic carries information; push on key claims; punch only on the hook
 const CAM = [
   { t: 0, l: 'full', d: 0 },
-  { t: snap(t('第一点') - .2), l: 'split' },
+  { t: snapBefore(t('第一点') - .2), l: 'split' },          // split: snapBefore → person moves aside before the graphic enters
   { t: snap(t('总结一下')), l: 'full' },
   { t: t('总结一下') + .6, l: 'push', d: 7 },
 ];

@@ -5,8 +5,8 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 
 # Video Boost（口播增强）
 
-工程目录：`~/CC/knock-video-boost/`（HyperFrames 渲染 + GSAP 时间轴 + 自建组件库）。
-参考样片：`runs/v5/`（大厂人转型AI，156s，用户评价「这一版很好」）、`runs/ai-value/`（AI应用值不值钱，104.7s，skill 首跑）——新片子照它们的 `beats.mjs` 抄结构。
+工程目录：仓库根目录（公开仓库 github.com/Minerva67/video-boost；本机在 `~/CC/knock-video-boost/`）。HyperFrames 渲染 + GSAP 时间轴 + 自建组件库。
+样板：`runs/example/beats.mjs`（结构模板）+ `references/components.md`（每个组件的数据写法）。**判断规则全在 `references/rules.md`**（负荷类型、划段、版式轮换、模板入场顺序、小标题），不依赖任何外部文档。本机若有 `runs/v5/`（大厂转型 AI，用户评「这一版很好」）、`runs/ai-value/` 可对照，但它们不进公开仓库。
 
 ## 铁律（用户反复确认过的，违反即返工）
 
@@ -16,7 +16,7 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 4. **示意 ≠ 编造**：允许示意界面（窗口角标「示意」），但不加原片没说的观点；**任何数字/来源必须真实检索**（WebSearch+WebFetch 核实页面原文；多家口径不同就写区间并都标出），示例标题类内容不带热度/点赞数字。
 5. **不挡脸、不挤**：只有两种机位布局——全屏 / 人 62% 贴底居中 + 上方 550px 图形区。画中画（人缩到 30% 角落）被否。
 6. **皮肤 = 主题（theme）**，默认用户自己的 Knock〃 设计系统 B 线密度（`brand/themes/knock/`）；也有 私有主题（`brand/themes/<私有主题>/`，按品牌规范B 线）。换主题：`node build.mjs runs/<name> --theme=<name>`（输出到 `public-<theme>/`）。Knock 版细则：纸白打底、门黄只做小色块、敲击橙 ≤5%、1.5px 墨黑描边、无阴影；右上角横版 logo 常驻。Claude 风格皮肤被否（"设计系统还是用我的"），Knock 三色大面积铺屏也被否（"太鲜艳很累"）。
-7. **拆分逻辑按用户 PRD V3**：（本地私有文档））.md`——六类负荷（NUM/ENU/SEQ/TRM/CMP/ABS）+ 复合类型 + 相邻段不同版式 + 旁支不增强。但低负荷的劝导/观点类口播，大部分时间应该回到全屏，只留 4–6 个图形。
+7. **拆分逻辑**：六类负荷 + 复合类型 + 相邻段不同版式 + 旁支不增强，规则见 `references/rules.md` §1–2（源自用户的视频增强 PRD V3 与《可视化选型规范 · 30 模板》，已摘全）。低负荷的劝导/观点类口播，大部分时间应该回到全屏，只留 4–6 个图形。
 
 ## 流水线
 
@@ -24,7 +24,7 @@ description: 口播视频增强（Video Boost）：把一支单人口播视频�
 ./prep.sh <视频文件> <name>                      # 拷源片(HDR 自动 avconvert 转 SDR)、抽音频、medium 模型 beam5 转录、按标点重切段
 # → 读 runs/<name>/segs_beam.json，校对写 runs/<name>/script.txt（| = 字幕断点）
 .venv/bin/python align.py runs/<name> <时长>       # 校对文本对齐回 ASR 字级时间 + VAD 校时 → transcript.json / captions.json / voiced.json
-.venv/bin/python fix_caps.py runs/<name> <时长>    # 自动合并 <1s 或 >9字/s 的字幕屏，重对齐
+.venv/bin/python fix_caps.py runs/<name> <时长>    # 自动合并 <1s 或 >9字/s 的字幕屏，重对齐（不跨章节/句子/停顿合并）
 # → 写 runs/<name>/beats.mjs（从 runs/v5/beats.mjs 复制改）
 node build.mjs runs/<name>
 npx hyperframes lint runs/<name>/public            # 0 error 即可（caption 的 nested 警告是已知的）
@@ -37,6 +37,9 @@ HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google 
 环境：ffmpeg/ffprobe 在 `~/.local/bin`；whisper 模型 `~/.cache/kvb-models/ggml-medium-q5_0.bin`（被清盘删过一次，prep.sh 会自动重下，515MB）；渲染用系统 Chrome。
 
 ### 校对 script.txt 的要点
+- **先看 prep 输出的「ASR 覆盖检查」**：`check_asr.py` 会列出两类问题。①有声音但 ASR 没转出来的段落；②ASR 转出来了、但分段稿里没有的句子。这两类都要逐条切片重转，补进 script.txt。
+- 切片重转的 initial_prompt **只塞 3–5 个本段会出现的术语**。塞太多，模型会把术语表本身当成内容输出。
+- 字幕不带句末标点（逗号、句号去掉），问号、感叹号保留。
 - 只改错字、不改说法；去气口（嗯/呃）可以，不润色不补词。
 - 拿不准的词：把那几秒切出来，用带术语的 initial_prompt 再转一遍（例：「大厂人转型AI，会议纪要，Claude Code，Codex」）。专名按真名写（ClockCode→Claude Code，Codeash→Codex，ChadGBT→ChatGPT）。仍不确定的，交付时列给用户听。
 - 断屏：竖屏 ≤10 字/屏（拉丁字母算半个），在语义停顿处断；专名、数字+单位不拆。语速快时 fix_caps 会合并，剩下 0.9s 左右的几屏可接受，交付时说明。
@@ -58,6 +61,9 @@ HYPERFRAMES_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google 
 **接一个新设计系统的步骤**：①读它的规范，找 B 线/产品 UI 密度那一档（视频叠层要克制，营销 A 线的大色块不要搬）；②把品牌色分配到 mark（大面积点亮也不刺眼的那个）和 accent（只出现一处的那个），饱和品牌色宁可降成 mark 也别铺底；③字体下 OFL 版放进主题目录；④建 theme.json → build → 跑 eval + 人工 H4/H6；⑤白底亮发等场景检查字幕可读（stroke 风格要加粗描边）。
 
 ## 写 beats.mjs：先判断，再选组件
+
+### 第零步：小标题
+先把全片拆成几点，给每一点写小标题。规则：写结论不写话题，动宾或判断句，≤7 字。把小标题连起来读，应该就是全片的论证骨架。细则见 `references/rules.md` §4。
 
 ### 第一步：全片论证 → 哪里值得图形
 通读校对稿，写出：核心论点 + 支撑点（通常是「第 N 点」）+ 每点里的例子。然后逐段问：
@@ -101,7 +107,7 @@ HyperFrames 官方目录（`npx hyperframes catalog`）有 tiktok-follow / yt-co
 | `push` 慢推 | 关键判断、定义、回顾到片尾 | 1.00→1.06，d 5–9s |
 | `punch` 硬切放大 | **只给钩子金句**，换章时硬切回 | s 1.14，d 0；贴脸自拍用 beats 里 `LAYOUT.punch` 降到 1.07 |
 
-所有移动用 `snap()` 吸到说话停顿（voiced.json 的间隙；±0.7s 找不到就放宽到 ±1.4s；语速快到完全没停顿时退到最近的字幕断点），镜头不在词中间动；split 的落位要早于图形入场。
+**让位（split）用 `snapBefore()`**：只往前找停顿，保证人先开始让位、图形后入场（build 会对违反的图形报警，Eval C6 检查）。其余移动用 `snap()` 吸到说话停顿（voiced.json 的间隙；±0.7s 找不到就放宽到 ±1.4s；语速快到完全没停顿时退到最近的字幕断点），镜头不在词中间动；split 的落位要早于图形入场。
 
 ## Eval（交付前必跑）
 `python3 eval.py runs/<name> [--public public-<theme>]` → `eval*.md`：门槛 A1–A5（不过不交付）+ 自动 B1–B6/C1–C5 + 人工 H1–H6 评分表。标准、阈值、出处、基线分见 `references/eval.md`。交付时报：门槛是否通过、自动分、主要 WARN 及是否属于可接受的判断项。

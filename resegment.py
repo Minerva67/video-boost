@@ -18,7 +18,9 @@ if cur: segs.append(cur)
 out = []
 for s in O:
     if s['end'] - s['start'] <= 8: out.append(s); continue
-    inner = [x for x in segs if x['start'] >= s['start'] - .05 and x['end'] <= s['end'] + .05]
+    # assign each punctuation-sentence to the whisper segment holding its midpoint (a sentence straddling a
+    # segment boundary used to be dropped by both sides — that is how a whole sentence went missing)
+    inner = [x for x in segs if s['start'] <= (x['start'] + x['end']) / 2 < s['end']]
     out += inner or [s]
 json.dump(out, open(f'{run}/segs_beam.json', 'w'), ensure_ascii=False, indent=0)
 print(len(O), '→', len(out), 'segments')
