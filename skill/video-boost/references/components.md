@@ -145,5 +145,6 @@ const CAM = [
 4. 入场顺序按 `rules.md` §2 对应模板的规定写死，元素在关键词说出的那一刻出现（数据里用 `at: t('…原话…')`）。
 5. 样式写进 `brand/components.css`：字号只用 `var(--fs-…)`（阶梯见 `typography.md`），颜色只用主题变量，高度用 `var(--zh)`，这样放进 dense 的 760px 区也能自适应。
 6. 一个图形最多 3 档阅读字号；不要比字幕还大，那一个关键数字除外。
+6b. 固定高度的框里放文字，要么算准行数（高度 = 行数 × 行高），要么用两行省略号（`-webkit-line-clamp`）；滚动的窗口底部加渐隐。不能让文字被拦腰切掉（Eval T6 会查）。
 7. 动画只用 GSAP（transform 和 opacity），不用 CSS animation，也不动 `left` / `top`，否则不能逐帧渲染。
 8. 写完跑 `node build.mjs` 加 lint，再用 snapshot 看单帧，最后 `./evaluate.sh` 检查。

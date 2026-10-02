@@ -175,6 +175,8 @@ if os.path.exists(AUD):
         if mc / ch > .25: microheavy.append((b['c'], round(b['s']), f'{mc / ch:.0%}'))
         out_ = [x['text'] for x in b['items'] if x['box'][1] < top or x['box'][3] > bot or x['box'][2] > right]
         if out_: unsafe.append((b['c'], round(b['s']), out_[:3]))
+    cutl = [(b['c'], round(b['s']), [x['text'][:10] for x in b['items'] if x.get('cut')][:3]) for b in A['beats'] if any(x.get('cut') for x in b['items'])]
+    add('T6', '字号', '文字没有被容器裁掉一半', 'PASS' if not cutl else 'FAIL', f'{len(cutl)} 个图形有被裁掉的文字' + (f'：{cutl}' if cutl else '') + '（终端渐隐、两行省略号不算）')
     add('T1', '字号', '字号都在阶梯上（22/28/36/54/96/140）', 'PASS' if not off else 'FAIL', f'{len(off)} 个图形有阶梯外字号' + (f'：{off}' if off else ''))
     add('T2', '字号', '每个图形 ≤3 档阅读字号（来源 micro、display/hero 另计）', 'PASS' if not many else 'WARN' if all(len(t) == 4 for *_, t in many) else 'FAIL', f'{len(many)} 个超标' + (f'：{many}' if many else ''))
     add('T3', '字号', '没有小于 22px 的文字', 'PASS' if not tiny else 'FAIL', f'{len(tiny)} 处' + (f'：{tiny}' if tiny else ''))

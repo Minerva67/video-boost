@@ -241,7 +241,7 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-cc .bar span { margin-left: 12px; font: 600 var(--fs-micro)/1 var(--en); color: var(--ink); }
 .k-cc .bar .star { color: var(--accent); font-style: normal; }
 .k-cc .bar small { margin-left: auto; font: 500 var(--fs-micro)/1 var(--cn); color: var(--ink40); }
-.k-cc .vp { position: absolute; left: 0; right: 0; top: 52px; bottom: 0; overflow: hidden; }
+.k-cc .vp { position: absolute; left: 0; right: 0; top: 52px; bottom: 0; overflow: hidden; -webkit-mask-image: linear-gradient(#000 82%, transparent); mask-image: linear-gradient(#000 82%, transparent); }
 .k-cc .feed { padding: 18px 28px; }
 .k-cc .pr { display: flex; gap: 12px; padding: 12px 16px; margin-bottom: 14px; border-radius: 12px; background: var(--paper); border: var(--stroke) solid var(--line); font: 600 var(--fs-small)/1.4 var(--cn); }
 .k-cc .pr b { font: 700 var(--fs-small)/1.4 var(--mono); color: var(--accent); }
@@ -366,22 +366,23 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .z-main { top: 0; height: var(--zh); }
 .z-below { height: var(--zh); }
 .k-kwm, .k-notes, .k-rng, .k-shb, .k-fld { position: absolute; inset: 0; }
-.k-kwm { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: auto 1fr auto; column-gap: 30px; align-items: center; padding: 16px 28px;
+.k-kwm { display: grid; grid-template-columns: auto auto 1fr; grid-template-rows: auto; column-gap: 26px; align-items: center; padding: 14px 26px;
   border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); box-shadow: var(--shadow); }
-.k-kwm .lab { grid-column: 1 / -1; font: 700 var(--fs-small)/1 var(--cn); }
+.k-kwm .lab { font: 700 var(--fs-small)/1.3 var(--cn); white-space: nowrap; }
+.k-kwm .lab small { display: block; margin: 6px 0 0 !important; }
 .k-kwm .lab small, .k-notes .lab small { margin-left: 12px; font: 500 var(--fs-micro)/1 var(--cn); color: var(--ink40); }
 .k-kwm .cnt { display: flex; align-items: baseline; gap: 10px; }
-.k-kwm .num { position: relative; display: inline-block; width: 90px; height: 100px; }
-.k-kwm .num b { position: absolute; right: 0; bottom: 0; font: 800 var(--fs-display)/1 var(--en); }
-.k-kwm .tot { font: 600 var(--fs-body)/1 var(--en); color: var(--ink40); }
+.k-kwm .num { position: relative; display: inline-block; width: 64px; height: 56px; }
+.k-kwm .num b { position: absolute; right: 0; bottom: 0; font: 800 var(--fs-title)/1 var(--en); }
+.k-kwm .tot { font: 600 var(--fs-small)/1 var(--en); color: var(--ink40); }
 .k-kwm .segs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
 .k-kwm .segs i { height: 46px; border-radius: 10px; border: var(--stroke) dashed var(--ink40); background: var(--card); }
-.k-kwm .note { grid-column: 1 / -1; font: 500 var(--fs-micro)/1.3 var(--cn); color: var(--ink70); }
+.k-kwm .note { display: none; font: 500 var(--fs-micro)/1.3 var(--cn); color: var(--ink70); }
 .k-notes .lab { font: 700 var(--fs-small)/1 var(--cn); margin-bottom: 14px; }
 .k-notes .wall { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .k-notes .nc { position: relative; padding: 8px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); box-shadow: var(--shadow); }
 .k-notes .nc .cv { display: grid; place-items: center; height: 54px; border-radius: 8px; font: 700 var(--fs-micro)/1 var(--en); color: var(--ink40); font-style: normal; }
-.k-notes .nc b { display: block; margin-top: 6px; height: 46px; overflow: hidden; font: 600 var(--fs-micro)/1.28 var(--cn); }
+.k-notes .nc b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin-top: 6px; height: 2.6em; overflow: hidden; font: 600 var(--fs-micro)/1.3 var(--cn); }
 .k-notes .nc .tag { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); white-space: nowrap; padding: 4px 10px; border-radius: 999px;
   background: var(--accent); color: var(--card); font: 700 var(--fs-micro)/1 var(--cn); font-style: normal; }
 .k-rng { padding: 20px 28px; border-radius: var(--r); background: var(--card); border: var(--stroke) solid var(--frame); box-shadow: var(--shadow); }
@@ -453,3 +454,8 @@ em.y { background: linear-gradient(transparent 58%, var(--mark) 58% 94%, transpa
 .k-stack .card b { font: 600 var(--fs-small)/1 var(--en); color: var(--ink40); }
 .k-stack .card .t { font: 700 var(--fs-body)/1.25 var(--cn); }
 .k-stack .card .s { margin-left: auto; font: 500 var(--fs-small)/1.2 var(--cn); color: var(--ink70); white-space: nowrap; }
+
+/* résumé fits the shorter dense zone (graphics start at y=250 for the platform safe zone) */
+.z-main .k-cv .chip { height: 58px; }
+.z-main .k-cv .sec { margin-top: 16px; }
+.z-main .k-cv .top { padding-bottom: 16px; }

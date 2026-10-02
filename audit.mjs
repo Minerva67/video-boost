@@ -45,12 +45,15 @@ const measure = (sel, t) => page.evaluate((sel, t) => {
     const txt = n.textContent.replace(/\s+/g, ''); if (!txt) continue;
     const el = n.parentElement; if (!visible(el)) continue;
     const r = document.createRange(); r.selectNodeContents(n); const b = r.getBoundingClientRect(); if (!b.width) continue;
-    let clipped = false;   // text scrolled out of an overflow:hidden window (e.g. the terminal feed) is not on screen
-    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { if (getComputedStyle(p).overflow === 'hidden') { const q = p.getBoundingClientRect(); if (b.bottom < q.top + 2 || b.top > q.bottom - 2) { clipped = true; break; } } }
+    let clipped = false, cut = false;   // fully scrolled out of an overflow:hidden window = not on screen; partly outside = cut in half (T6)
+    for (let p = el; p && p !== document.body; p = p.parentElement) { const ps = getComputedStyle(p); if (ps.overflow === 'hidden') { const q = p.getBoundingClientRect();
+      if (b.bottom < q.top + 2 || b.top > q.bottom - 2) { clipped = true; break; }
+      const faded = ps.maskImage && ps.maskImage !== 'none', clamp = getComputedStyle(el).webkitLineClamp && getComputedStyle(el).webkitLineClamp !== 'none';
+      if (!faded && !clamp && (b.top < q.top - 2 || b.bottom > q.bottom + 2 || b.left < q.left - 2 || b.right > q.right + 2)) cut = true; } }
     if (clipped) continue;
     const cs = getComputedStyle(el); const fs = parseFloat(cs.fontSize);
     const sc = el.offsetHeight ? el.getBoundingClientRect().height / el.offsetHeight : 1;   // GSAP scale on ancestors
-    out.push({ text: txt.slice(0, 24), chars: txt.length, fs: Math.round(fs), sc: +(isFinite(sc) ? sc : 1).toFixed(2), px: Math.round(fs * (isFinite(sc) && sc > 0 ? sc : 1)), cls: (el.className && el.className.baseVal === undefined ? el.className : '') || el.tagName.toLowerCase(),
+    out.push({ text: txt.slice(0, 24), chars: txt.length, cut, fs: Math.round(fs), sc: +(isFinite(sc) ? sc : 1).toFixed(2), px: Math.round(fs * (isFinite(sc) && sc > 0 ? sc : 1)), cls: (el.className && el.className.baseVal === undefined ? el.className : '') || el.tagName.toLowerCase(),
       box: [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)] });
   }
   return out;
